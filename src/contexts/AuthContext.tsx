@@ -83,7 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const t = setTimeout(() => reject(new Error(label)), ms);
       p.then(
         (v) => { clearTimeout(t); resolve(v); },
-        (e) => { clearTimeout(t); reject(e); }
+        (e) => { clearTimeout(t); resolve(e); }
       );
     });
   }
