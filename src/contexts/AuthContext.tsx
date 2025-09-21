@@ -67,6 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('Auth state change - fetching profile for:', session.user.id)
           await fetchUserProfile(session.user.id)
           console.log('Auth state change - profile fetch completed successfully')
+          // setLoading(false)
         } catch (error) {
           console.error('Profile fetch failed during auth change:', error)
           // Don't let profile fetch failure block the auth flow
@@ -77,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserProfile(null)
       }
       console.log('Auth state change - setting loading to false')
-      setLoading(false)
+      // setLoading(false)
     })
 
     return () => {
