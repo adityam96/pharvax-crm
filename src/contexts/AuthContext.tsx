@@ -29,6 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isConfigured] = useState(isSupabaseConfigured())
 
   useEffect(() => {
+    console.log("In useeffect")
     // If Supabase is not configured, just stop loading
     if (!isConfigured) {
       console.log('Supabase not configured, stopping loading')
