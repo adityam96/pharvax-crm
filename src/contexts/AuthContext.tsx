@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         5_000,
         'DB timeout: user_profiles read exceeded 2s'
       );
-
+      console.log("Test log")
       const result = await withTimeout(
         supabase
           .from('user_profiles')
