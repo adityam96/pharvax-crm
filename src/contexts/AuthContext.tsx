@@ -102,18 +102,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('About to query user_profiles table...')
       console.log('Querying with userId:', userId)
 
-      await sleep(1500);
-      
-      const result1 = await withTimeout(
-        supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', userId)
-          .maybeSingle(),
-        5_000,
-        'DB timeout: user_profiles read exceeded 2s'
-      );
-      console.log("Test log")
       const result = await withTimeout(
         supabase
           .from('user_profiles')
