@@ -41,6 +41,7 @@ export const signOut = async () => {
 
 export const getCurrentUser = async () => {
   try {
+    console.log("inside getCurrentUser")
     const { data: { user }, error } = await supabase.auth.getUser()
     return { user, error }
   } catch (error) {
