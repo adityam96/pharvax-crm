@@ -81,12 +81,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   function withTimeout<T>(p: Promise<T>, ms: number, label = 'Timeout'): Promise<T> {
     try {
       return new Promise<T>((resolve, reject) => {
-        const t = setTimeout(() => reject(new Error(label)), ms);
-        p.then(
-          (v) => { clearTimeout(t); resolve(v); },
-          (e) => { clearTimeout(t); resolve(e); }
-        );
-      });
+      const t = setTimeout(() => reject(new Error(label)), ms);
+      p.then(
+        (v) => { clearTimeout(t); resolve(v); },
+        (e) => { clearTimeout(t); resolve(e); }
+      );
+    });
+    } catch (error) {
+      // do nothing
     }
   }
   
