@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('Auth state change - fetching profile for:', session.user.id)
           await fetchUserProfile(session.user.id)
           console.log('Auth state change - profile fetch completed successfully')
-          // setLoading(false)
+          setLoading(false)
         } catch (error) {
           console.error('Profile fetch failed during auth change:', error)
           // Don't let profile fetch failure block the auth flow
@@ -113,7 +113,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Retry logic for database calls
       let result;
       let attempts = 0;
-      const maxAttempts = 3;
+      const maxAttempts = 1;
       
       while (attempts < maxAttempts) {
         attempts++;
