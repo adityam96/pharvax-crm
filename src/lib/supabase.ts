@@ -43,6 +43,7 @@ export const getCurrentUser = async () => {
   try {
     console.log("inside getCurrentUser")
     const { data: { user }, error } = await supabase.auth.getUser()
+    console.log("getCurrentUser result:", user)
     return { user, error }
   } catch (error) {
     return { user: null, error }
