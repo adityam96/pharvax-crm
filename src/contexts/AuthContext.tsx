@@ -91,7 +91,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // do nothing
     }
   }
-  
+
+  const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
     
   const fetchUserProfile = async (userId: string) => {
     console.log('fetchUserProfile called with userId:', userId)
