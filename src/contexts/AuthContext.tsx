@@ -39,7 +39,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
     getCurrentUser().then(({ user, error }) => {
       console.log('Initial user fetch result:', { user: user?.email, error })
-      setLoading(true)
       if (!error && user) {
         setUser(user)
         fetchUserProfile(user.id).then(() => {
