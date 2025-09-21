@@ -104,7 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .select('*')
           .eq('user_id', userId)
           .maybeSingle(),
-        2_000,
+        5_000,
         'DB timeout: user_profiles read exceeded 2s'
       );
 
