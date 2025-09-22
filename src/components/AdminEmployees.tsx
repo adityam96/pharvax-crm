@@ -43,22 +43,6 @@ const AdminEmployees: React.FC = () => {
         callsMade: 0, // TODO: Calculate from leads table
         closedDeals: 0, // TODO: Calculate from leads table
         joinDate: profile.created_at?.split('T')[0] || '',
-        status: 'Active',
-        department: profile.department,
-        location: profile.location,
-        user_id: profile.user_id
-      }));
-
-      // Get actual active status from database
-      const transformedData = profiles.map(profile => ({
-        id: profile.id,
-        name: profile.name,
-        email: profile.email_id,
-        phone: profile.phone,
-        role: profile.role === 'admin' ? 'Administrator' : profile.position || 'Sales Representative',
-        callsMade: 0, // TODO: Calculate from leads table
-        closedDeals: 0, // TODO: Calculate from leads table
-        joinDate: profile.created_at?.split('T')[0] || '',
         status: profile.is_active ? 'Active' : 'Inactive',
         department: profile.department,
         location: profile.location,
