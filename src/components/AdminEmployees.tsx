@@ -11,6 +11,7 @@ const AdminEmployees: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   const [allEmployees, setAllEmployees] = useState([]);
+  const [availableRoles, setAvailableRoles] = useState<string[]>(['All']);
 
   // Fetch employees from database
   useEffect(() => {
