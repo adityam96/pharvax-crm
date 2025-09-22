@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Initial user fetch result:', { user: user?.email, error })
       if (!error && user) {
         setUser(user)
-        fetchUserProfile(user.id).then(() => {
+        fetchUserProfile(user.id, "initial user fetch").then(() => {
           console.log('Profile fetch completed, stopping loading')
           setLoading(false)
         }).catch((err) => {
@@ -66,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (session?.user) {
         try {
           console.log('Auth state change - fetching profile for:', session.user.id)
-          await fetchUserProfile(session.user.id)
+          await fetchUserProfile(session.user.id, "auth state change")
           console.log('Auth state change - profile fetch completed successfully')
           setLoading(false)
         } catch (error) {
@@ -103,8 +103,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
     
-  const fetchUserProfile = async (userId: string) => {
-    console.log('fetchUserProfile called with userId:', userId)
+  const fetchUserProfile = async (userId: string, caller: string) => {
+    console.log('fetchUserProfile called with userId:', userId, ' from: ', caller)
     if (!isConfigured) return
     
     try {
