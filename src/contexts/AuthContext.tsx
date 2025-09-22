@@ -59,32 +59,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true)
     })
 
-    // // Listen for auth changes only if configured
-    // const { data: { subscription } } = onAuthStateChange(async (event, session) => {
-    //   console.log('Auth state change:', event, session?.user?.email || 'no user', session?.user)
-    //   setUser(session?.user ?? null)
-    //   if (session?.user) {
-    //     try {
-    //       console.log('Auth state change - fetching profile for:', session.user.id)
-    //       await fetchUserProfile(session.user.id, "auth state change")
-    //       console.log('Auth state change - profile fetch completed successfully')
-    //       setLoading(false)
-    //     } catch (error) {
-    //       console.error('Profile fetch failed during auth change:', error)
-    //       // Don't let profile fetch failure block the auth flow
-    //       setUserProfile(null)
-    //     }
-    //   } else {
-    //     console.log('Auth state change - no user, clearing profile')
-    //     setUserProfile(null)
-    //   }
-    //   console.log('Auth state change - setting loading to false')
-    //   // setLoading(false)
-    // })
+    
+    // Listen for auth changes only if configured
+    const { data: { subscription } } = onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event, session?.user?.email || 'no user', session?.user)
+      setUser(session?.user ?? null)
+      if (session?.user) {
+        try {
+          console.log('Auth state change - fetching profile for:', session.user.id)
+          await fetchUserProfile(session.user.id, "auth state change")
+          console.log('Auth state change - profile fetch completed successfully')
+          setLoading(false)
+        } catch (error) {
+          console.error('Profile fetch failed during auth change:', error)
+          // Don't let profile fetch failure block the auth flow
+          setUserProfile(null)
+        }
+      } else {
+        console.log('Auth state change - no user, clearing profile')
+        setUserProfile(null)
+      }
+      console.log('Auth state change - setting loading to false')
+      // setLoading(false)
+    })
 
-    // return () => {
-    //   subscription.unsubscribe()
-    // }
+    return () => {
+      subscription.unsubscribe()
+    }
     return () => {}
   }, [isConfigured])
 
