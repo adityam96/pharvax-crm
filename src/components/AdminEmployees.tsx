@@ -33,27 +33,11 @@ const AdminEmployees: React.FC = () => {
         return;
       }
 
-      // Then get auth users to get email addresses
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) {
-        console.error('Error fetching auth users:', authError);
-        // Continue without email data if auth fetch fails
-      }
-
-      // Create a map of user_id to email
-      const emailMap = {};
-      if (authUsers && authUsers.users) {
-        authUsers.users.forEach(user => {
-          emailMap[user.id] = user.email;
-        });
-      }
-
       // Transform data to match expected format
       const transformedData = profiles.map(profile => ({
         id: profile.id,
         name: profile.name,
-        email: emailMap[profile.user_id] || 'N/A', // Get email from auth users
+        email: profile.email_id
         phone: profile.phone,
         role: profile.role === 'admin' ? 'Administrator' : profile.position || 'Sales Representative',
         callsMade: 0, // TODO: Calculate from leads table
