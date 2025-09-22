@@ -128,7 +128,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               .select('*')
               .eq('user_id', userId)
               .maybeSingle(),
-            attempts === 1 ? 2_000 : 3_000, // First attempt gets 5s, others get 3s
+            attempts === 1 ? 1_000 : 3_000, // First attempt gets 5s, others get 3s
             `DB timeout: user_profiles read exceeded ${attempts === 1 ? 5 : 3}s (attempt ${attempts})`
           );
           break; // Success, exit retry loop
