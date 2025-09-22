@@ -120,10 +120,11 @@ const AdminEmployees: React.FC = () => {
 
   const addEmployeeWithSignup = async (employeeData) => {
     try {
-      // First, create the user account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Use admin API to create user without affecting current session
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: employeeData.email,
         password: employeeData.password,
+        email_confirm: true, // Auto-confirm email
         options: {
           data: {
             name: employeeData.name
