@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
-import { Search, Filter, Download, Calendar, ChevronDown, Upload, Plus, X, Mail, Phone, Building, User, Edit, UserCheck } from 'lucide-react';
+import { Search, Filter, Download, Calendar, ChevronDown, Upload, Plus, X, Mail, Phone, Building, User, Edit, UserCheck, FileText, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 const AdminLeads: React.FC = () => {
@@ -14,6 +14,7 @@ const AdminLeads: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [allLeads, setAllLeads] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   // Fetch data from database
   useEffect(() => {
@@ -236,6 +237,10 @@ const AdminLeads: React.FC = () => {
               <span>Add Lead</span>
             </button>
             <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium flex items-center space-x-2">
+            <button 
+              onClick={() => setShowImportModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium flex items-center space-x-2"
+            >
               <Upload className="w-4 h-4" />
               <span>Import CSV</span>
             </button>
@@ -536,6 +541,18 @@ const AdminLeads: React.FC = () => {
           onClose={() => {
             setShowEditModal(false);
             setEditingLead(null);
+          }}
+          employees={employees}
+        />
+      )}
+
+      {/* CSV Import Modal */}
+      {showImportModal && (
+        <CSVImportModal 
+          onClose={() => setShowImportModal(false)}
+          onImportComplete={() => {
+            setShowImportModal(false);
+            fetchLeads(); // Refresh leads after import
           }}
           employees={employees}
         />
