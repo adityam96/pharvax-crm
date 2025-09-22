@@ -104,50 +104,34 @@ const AdminEmployees: React.FC = () => {
 
   const addEmployeeWithSignup = async (employeeData) => {
     try {
-      // Use admin API to create user without affecting current session
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: employeeData.email,
-        password: employeeData.password,
-        email_confirm: true, // Auto-confirm email
-        options: {
-          data: {
-            name: employeeData.name
+      // TODO: This requires a secure backend endpoint with service role key
+      // For now, we'll create a placeholder profile that can be activated later
+      console.warn('Admin user creation requires backend implementation');
+      
+      // Create a placeholder profile entry
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .insert([
+          {
+            user_id: null, // Will be updated when user signs up
+            name: employeeData.name,
+            role: employeeData.role.toLowerCase(),
+            position: employeeData.role,
+            department: employeeData.department,
+            location: employeeData.location,
+            phone: employeeData.phone
           }
-        }
-      });
+        ]);
 
-      if (authError) {
-        console.error('Error creating user account:', authError);
-        alert('Error creating user account: ' + authError.message);
+      if (profileError) {
+        console.error('Error creating employee profile:', profileError);
+        alert('Error creating employee profile: ' + profileError.message);
         return;
-      }
-
-      // Then create the user profile
-      if (authData.user) {
-        const { error: profileError } = await supabase
-          .from('user_profiles')
-          .insert([
-            {
-              user_id: authData.user.id,
-              name: employeeData.name,
-              role: employeeData.role.toLowerCase(),
-              position: employeeData.role,
-              department: employeeData.department,
-              location: employeeData.location,
-              phone: employeeData.phone
-            }
-          ]);
-
-        if (profileError) {
-          console.error('Error creating user profile:', profileError);
-          alert('User account created but profile creation failed: ' + profileError.message);
-          // Note: User account was created successfully, just profile failed
-        }
       }
 
       setShowAddModal(false);
       fetchEmployees();
-      alert('Employee account created successfully!');
+      alert('Employee profile created successfully! The employee will need to sign up with their email to activate their account.');
     } catch (error) {
       console.error('Error creating employee:', error);
       alert('Error creating employee: ' + error.message);
