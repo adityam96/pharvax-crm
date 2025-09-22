@@ -49,6 +49,9 @@ const AdminEmployees: React.FC = () => {
         user_id: profile.user_id
       }));
 
+      // Extract unique roles
+      const uniqueRoles = ['All', ...new Set(transformedData.map(emp => emp.role))];
+      setAvailableRoles(uniqueRoles);
       setAllEmployees(transformedData);
     } catch (error) {
       console.error('Error fetching employees:', error);
