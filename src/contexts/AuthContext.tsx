@@ -26,7 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isConfigured] = useState(isSupabaseConfigured())
+  const [isConfigured] = useState(true)
 
   useEffect(() => {
     console.log("In useeffect")
