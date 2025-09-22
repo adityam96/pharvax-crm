@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
-import { Search, Filter, Edit, Trash2, ChevronDown, Plus, X, User, Mail, Phone, Calendar, UserCheck, TrendingUp, FileText } from 'lucide-react';
+import { Search, Filter, Edit, Trash2, ChevronDown, X, User, Mail, Phone, Calendar, UserCheck, TrendingUp, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 const AdminEmployees: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
-  const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -98,46 +97,6 @@ const AdminEmployees: React.FC = () => {
     }
   };
 
-  const handleAddEmployee = (employeeData) => {
-    addEmployeeWithSignup(employeeData);
-  };
-
-  const addEmployeeWithSignup = async (employeeData) => {
-    try {
-      // TODO: This requires a secure backend endpoint with service role key
-      // For now, we'll create a placeholder profile that can be activated later
-      console.warn('Admin user creation requires backend implementation');
-      
-      // Create a placeholder profile entry
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .insert([
-          {
-            user_id: null, // Will be updated when user signs up
-            name: employeeData.name,
-            role: employeeData.role.toLowerCase(),
-            position: employeeData.role,
-            department: employeeData.department,
-            location: employeeData.location,
-            phone: employeeData.phone
-          }
-        ]);
-
-      if (profileError) {
-        console.error('Error creating employee profile:', profileError);
-        alert('Error creating employee profile: ' + profileError.message);
-        return;
-      }
-
-      setShowAddModal(false);
-      fetchEmployees();
-      alert('Employee profile created successfully! The employee will need to sign up with their email to activate their account.');
-    } catch (error) {
-      console.error('Error creating employee:', error);
-      alert('Error creating employee: ' + error.message);
-    }
-  };
-
   const handleUpdateEmployee = (updatedEmployee) => {
     updateEmployee(updatedEmployee);
   };
@@ -188,13 +147,6 @@ const AdminEmployees: React.FC = () => {
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">Employee Management</h1>
-          <button 
-            onClick={() => setShowAddModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium flex items-center space-x-2"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Employee</span>
-          </button>
         </div>
       </div>
 
@@ -312,14 +264,6 @@ const AdminEmployees: React.FC = () => {
         )}
       </div>
 
-      {/* Add Employee Modal */}
-      {showAddModal && (
-        <AddEmployeeModal 
-          onSave={handleAddEmployee}
-          onClose={() => setShowAddModal(false)}
-        />
-      )}
-
       {/* Edit Employee Modal */}
       {showEditModal && editingEmployee && (
         <EditEmployeeModal 
@@ -331,174 +275,6 @@ const AdminEmployees: React.FC = () => {
           }}
         />
       )}
-    </div>
-  );
-};
-
-// Add Employee Modal Component
-const AddEmployeeModal = ({ onSave, onClose }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    phone: '',
-    role: '',
-    department: 'Sales',
-    location: '',
-    joinDate: new Date().toISOString().split('T')[0]
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave(formData);
-  };
-
-  const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Add New Employee</h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-          >
-            <X className="w-5 h-5 text-gray-600" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <User className="w-4 h-4 inline mr-2" />
-              Full Name
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => handleChange('name', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter full name"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Mail className="w-4 h-4 inline mr-2" />
-              Email
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleChange('email', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter email address"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              value={formData.password}
-              onChange={(e) => handleChange('password', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter password (min 6 characters)"
-              required
-              minLength={6}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Phone className="w-4 h-4 inline mr-2" />
-              Phone
-            </label>
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => handleChange('phone', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter phone number"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Role
-            </label>
-            <select
-              value={formData.role}
-              onChange={(e) => handleChange('role', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            >
-              <option value="">Select role</option>
-              <option value="Sales Manager">Sales Manager</option>
-              <option value="Sales Representative">Sales Representative</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Location
-            </label>
-            <select
-              value={formData.location}
-              onChange={(e) => handleChange('location', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            >
-              <option value="">Select location</option>
-              <option value="Mumbai">Mumbai</option>
-              <option value="Delhi">Delhi</option>
-              <option value="Bangalore">Bangalore</option>
-              <option value="Chennai">Chennai</option>
-              <option value="Pune">Pune</option>
-              <option value="Hyderabad">Hyderabad</option>
-              <option value="Kolkata">Kolkata</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Calendar className="w-4 h-4 inline mr-2" />
-              Join Date
-            </label>
-            <input
-              type="date"
-              value={formData.joinDate}
-              onChange={(e) => handleChange('joinDate', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
-          </div>
-
-          <div className="flex space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-md transition-colors duration-200 font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors duration-200 font-medium"
-            >
-              Add Employee
-            </button>
-          </div>
-        </form>
-      </div>
     </div>
   );
 };
