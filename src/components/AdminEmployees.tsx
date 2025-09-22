@@ -21,23 +21,39 @@ const AdminEmployees: React.FC = () => {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // First get user profiles
+      const { data: profiles, error: profileError } = await supabase
         .from('user_profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      console.log('Employee Data:', data)
-      
-      if (error) {
-        console.error('Error fetching employees:', error);
+      if (profileError) {
+        console.error('Error fetching user profiles:', profileError);
         return;
       }
 
+      // Then get auth users to get email addresses
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) {
+        console.error('Error fetching auth users:', authError);
+        // Continue without email data if auth fetch fails
+      }
+
+      // Create a map of user_id to email
+      const emailMap = {};
+      if (authUsers && authUsers.users) {
+        authUsers.users.forEach(user => {
+          emailMap[user.id] = user.email;
+        });
+      }
+
       // Transform data to match expected format
-      const transformedData = data.map(profile => ({
+      const transformedData = profiles.map(profile => ({
         id: profile.id,
         name: profile.name,
-        email: profile.user_id, // We'll need to get actual email from auth
+        email: emailMap[profile.user_id] || 'N/A', // Get email from auth users
         phone: profile.phone,
         role: profile.role === 'admin' ? 'Administrator' : profile.position || 'Sales Representative',
         callsMade: 0, // TODO: Calculate from leads table
@@ -45,7 +61,8 @@ const AdminEmployees: React.FC = () => {
         joinDate: profile.created_at?.split('T')[0] || '',
         status: 'Active',
         department: profile.department,
-        location: profile.location
+        location: profile.location,
+        user_id: profile.user_id
       }));
 
       setAllEmployees(transformedData);
@@ -55,6 +72,9 @@ const AdminEmployees: React.FC = () => {
       setLoading(false);
     }
   };
+        return;
+      }
+
 
   const filteredEmployees = allEmployees.filter(employee => {
     const matchesSearch = employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -98,35 +118,57 @@ const AdminEmployees: React.FC = () => {
   };
 
   const handleAddEmployee = (employeeData) => {
-    addEmployee(employeeData);
+    addEmployeeWithSignup(employeeData);
   };
 
-  const addEmployee = async (employeeData) => {
+  const addEmployeeWithSignup = async (employeeData) => {
     try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .insert([
-          {
-            name: employeeData.name,
-            role: employeeData.role.toLowerCase(),
-            position: employeeData.role,
-            department: employeeData.department,
-            location: employeeData.location,
-            phone: employeeData.phone
+      // First, create the user account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: employeeData.email,
+        password: employeeData.password,
+        options: {
+          data: {
+            name: employeeData.name
           }
-        ]);
+        }
+      });
 
-      if (error) {
-        console.error('Error adding employee:', error);
-        alert('Error adding employee');
+      if (authError) {
+        console.error('Error creating user account:', authError);
+        alert('Error creating user account: ' + authError.message);
         return;
+      }
+
+      // Then create the user profile
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .insert([
+            {
+              user_id: authData.user.id,
+              name: employeeData.name,
+              role: employeeData.role.toLowerCase(),
+              position: employeeData.role,
+              department: employeeData.department,
+              location: employeeData.location,
+              phone: employeeData.phone
+            }
+          ]);
+
+        if (profileError) {
+          console.error('Error creating user profile:', profileError);
+          alert('User account created but profile creation failed: ' + profileError.message);
+          // Note: User account was created successfully, just profile failed
+        }
       }
 
       setShowAddModal(false);
       fetchEmployees();
+      alert('Employee account created successfully!');
     } catch (error) {
-      console.error('Error adding employee:', error);
-      alert('Error adding employee');
+      console.error('Error creating employee:', error);
+      alert('Error creating employee: ' + error.message);
     }
   };
 
@@ -332,6 +374,7 @@ const AddEmployeeModal = ({ onSave, onClose }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    password: '',
     phone: '',
     role: '',
     department: 'Sales',
@@ -389,6 +432,21 @@ const AddEmployeeModal = ({ onSave, onClose }) => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Enter email address"
               required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Password
+            </label>
+            <input
+              type="password"
+              value={formData.password}
+              onChange={(e) => handleChange('password', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter password (min 6 characters)"
+              required
+              minLength={6}
             />
           </div>
 
