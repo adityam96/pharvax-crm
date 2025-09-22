@@ -49,6 +49,23 @@ const AdminEmployees: React.FC = () => {
         user_id: profile.user_id
       }));
 
+      // Get actual active status from database
+      const transformedData = profiles.map(profile => ({
+        id: profile.id,
+        name: profile.name,
+        email: profile.email_id,
+        phone: profile.phone,
+        role: profile.role === 'admin' ? 'Administrator' : profile.position || 'Sales Representative',
+        callsMade: 0, // TODO: Calculate from leads table
+        closedDeals: 0, // TODO: Calculate from leads table
+        joinDate: profile.created_at?.split('T')[0] || '',
+        status: profile.is_active ? 'Active' : 'Inactive',
+        department: profile.department,
+        location: profile.location,
+        user_id: profile.user_id,
+        is_active: profile.is_active ?? true
+      }));
+
       // Extract unique roles
       const uniqueRoles = ['All', ...new Set(transformedData.map(emp => emp.role))];
       setAvailableRoles(uniqueRoles);
@@ -110,12 +127,12 @@ const AdminEmployees: React.FC = () => {
       const { error } = await supabase
         .from('user_profiles')
         .update({
-          name: updatedEmployee.name,
-          role: updatedEmployee.role.toLowerCase(),
+          role: updatedEmployee.role === 'Administrator' ? 'admin' : 'employee',
           position: updatedEmployee.role,
           department: updatedEmployee.department,
           location: updatedEmployee.location,
-          phone: updatedEmployee.phone
+          phone: updatedEmployee.phone,
+          is_active: updatedEmployee.is_active
         })
         .eq('id', updatedEmployee.id);
 
@@ -202,6 +219,7 @@ const AdminEmployees: React.FC = () => {
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Name</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Role</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Location</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Status</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Calls Made</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Closed Deals</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Join Date</th>
@@ -214,6 +232,7 @@ const AdminEmployees: React.FC = () => {
                     <td className="py-3 px-4">
                       <div>
                         <div className="font-medium text-gray-900">{employee.name}</div>
+                        <div className="text-sm text-gray-500">{employee.email}</div>
                         <div className="text-sm text-gray-600">{employee.phone}</div>
                       </div>
                     </td>
@@ -224,7 +243,16 @@ const AdminEmployees: React.FC = () => {
                     </td>
                     <td className="py-3 px-4 text-gray-900">{employee.location}</td>
                     <td className="py-3 px-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        employee.is_active 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {employee.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {employee.callsMade}
                       </span>
                     </td>
