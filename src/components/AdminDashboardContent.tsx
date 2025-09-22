@@ -77,24 +77,24 @@ const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ setActive
       {/* Main Content */}
       <div className="p-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <div key={index} className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+              <div key={index} className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-lg text-gray-600 mb-2">{stat.label}</p>
+                    <p className="text-5xl font-bold text-gray-900">
                       {loading ? (
-                        <div className="w-8 h-8 border-2 border-gray-300 border-t-green-500 rounded-full animate-spin"></div>
+                        <div className="w-12 h-12 border-4 border-gray-300 border-t-green-500 rounded-full animate-spin"></div>
                       ) : (
                         stat.value
                       )}
                     </p>
                   </div>
-                  <div className={`p-3 rounded-lg ${stat.color}`}>
-                    <Icon className="w-6 h-6 text-white" />
+                  <div className={`p-4 rounded-xl ${stat.color}`}>
+                    <Icon className="w-12 h-12 text-white" />
                   </div>
                 </div>
               </div>
