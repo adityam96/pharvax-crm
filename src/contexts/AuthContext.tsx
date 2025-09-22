@@ -43,12 +43,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Initial user fetch result:', { user: user?.email, error })
       if (!error && user) {
         setUser(user)
-        fetchUserProfile(user.id, "initial user fetch").then(() => {
+        fetchUserProfileWithRetry(user.id, "initial user fetch").then(() => {
           console.log('Profile fetch completed, stopping loading')
           setLoading(false)
         }).catch((err) => {
           console.error('Profile fetch failed:', err)
-          setLoading(true)
+          // If it's a timeout error, the session was already cleared
+          if (!err.message?.includes('timeout after 10 seconds')) {
+            setLoading(false)
+          }
         })
       } else {
         console.log('No user or error, stopping loading')
@@ -56,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }).catch(() => {
       console.log('Initial user fetch failed, stopping loading')
-      setLoading(true)
+      setLoading(false)
     })
 
     
@@ -67,20 +70,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (session?.user) {
         try {
           console.log('Auth state change - fetching profile for:', session.user.id)
-          await fetchUserProfile(session.user.id, "auth state change")
+          await fetchUserProfileWithRetry(session.user.id, "auth state change")
           console.log('Auth state change - profile fetch completed successfully')
           setLoading(false)
         } catch (error) {
           console.error('Profile fetch failed during auth change:', error)
-          // Don't let profile fetch failure block the auth flow
-          setUserProfile(null)
+          // If it's a timeout error, the session was already cleared
+          if (!error.message?.includes('timeout after 10 seconds')) {
+            setUserProfile(null)
+            setLoading(false)
+          }
         }
       } else {
         console.log('Auth state change - no user, clearing profile')
         setUserProfile(null)
+        setLoading(false)
       }
-      console.log('Auth state change - setting loading to false')
-      // setLoading(false)
     })
 
     return () => {
@@ -167,6 +172,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUserProfile(data)
     } catch (error) {
       console.error('Error fetching user profile:', error)
+      
+      // If this is a timeout after 10 seconds, clear the session
+      if (error.message?.includes('timeout after 10 seconds')) {
+        console.log('Profile fetch failed after 10 seconds, clearing session and redirecting to login')
+        await forceSignOut()
+        return
+      }
+      
       setUserProfile(null)
       throw error
     }
@@ -333,21 +346,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const forceSignOut = async () => {
     console.log('Force signOut called')
     try {
+      // Clear state first
+      setUser(null)
+      setUserProfile(null)
+      setLoading(false)
+      
       // Clear all possible storage locations
       localStorage.clear()
       sessionStorage.clear()
-      
-      // Clear state
-      setUser(null)
-      setUserProfile(null)
       
       // Try Supabase signOut if configured
       if (isConfigured) {
         await supabase.auth.signOut()
       }
       
-      // Force reload to ensure clean state
-      window.location.href = '/login'
+      // Small delay to ensure state is cleared, then redirect
+      setTimeout(() => {
+        window.location.href = '/login'
+      }, 100)
     } catch (error) {
       console.error('Force signOut error:', error)
       // Even if there's an error, force reload
