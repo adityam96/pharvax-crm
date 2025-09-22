@@ -72,9 +72,6 @@ const AdminEmployees: React.FC = () => {
       setLoading(false);
     }
   };
-        return;
-      }
-
 
   const filteredEmployees = allEmployees.filter(employee => {
     const matchesSearch = employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
