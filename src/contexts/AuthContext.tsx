@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         })
       } else {
         console.log('No user or error, stopping loading')
-        setLoading(true)
+        setLoading(false)
       }
     }).catch(() => {
       console.log('Initial user fetch failed, stopping loading')
