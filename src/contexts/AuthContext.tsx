@@ -75,11 +75,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setLoading(false)
         } catch (error) {
           console.error('Profile fetch failed during auth change:', error)
-          // If it's a timeout error, the session was already cleared
-          if (!error.message?.includes('timeout after 10 seconds')) {
-            setUserProfile(null)
-            setLoading(false)
-          }
+          // Loading will be handled by forceSignOut if needed
+          setUserProfile(null)
+          setLoading(false)
         }
       } else {
         console.log('Auth state change - no user, clearing profile')
@@ -229,7 +227,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await fetchUserProfile(data.user.id, "sign in")
         } catch (profileError) {
           console.error('Profile fetch failed during sign in:', profileError)
-          setUserProfile(null)
+          // Don't set loading to false here - let the retry mechanism handle it
+          return { error: null } // Return success since auth worked
         }
       }
       
