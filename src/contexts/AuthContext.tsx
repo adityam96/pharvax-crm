@@ -190,6 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         setUser(mockUser as User)
         setUserProfile(mockProfile)
+        setLoading(false)
         return { error: null }
       } else {
         return { error: { message: 'Invalid demo credentials. Use admin@pharvax.com or employee@pharvax.com with password123' } }
@@ -197,17 +198,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
+      setLoading(true)
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (error) {
+        setLoading(false)
         return { error }
       }
 
+      if (data.user) {
+        setUser(data.user)
+        try {
+          await fetchUserProfile(data.user.id, "sign in")
+        } catch (profileError) {
+          console.error('Profile fetch failed during sign in:', profileError)
+          setUserProfile(null)
+        }
+      }
+      
+      setLoading(false)
       return { error: null }
     } catch (error) {
+      setLoading(false)
       return { error }
     }
   }

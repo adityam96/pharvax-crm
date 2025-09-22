@@ -24,6 +24,9 @@ const LoginPage: React.FC = () => {
         } else {
           setError(error.message || 'An error occurred during login');
         }
+      } else {
+        // Sign in successful - the App component will handle redirect
+        console.log('Sign in successful, waiting for redirect...')
       }
     } catch (err) {
       setError('An unexpected error occurred');

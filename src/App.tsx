@@ -10,7 +10,7 @@ function AppContent() {
   const { user, userProfile, loading } = useAuth();
 
   // Debug logging
-  console.log('App render - user:', user?.email || 'null', 'loading:', loading)
+  console.log('App render - user:', user?.email || 'null', 'loading:', loading, 'userProfile:', userProfile?.role || 'null')
 
   if (loading) {
     return (
