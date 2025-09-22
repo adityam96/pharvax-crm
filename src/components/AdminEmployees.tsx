@@ -385,9 +385,8 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => handleChange('name', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed"
+                  readOnly
                 />
               </div>
 
@@ -399,9 +398,8 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed"
+                  readOnly
                 />
               </div>
 
@@ -452,6 +450,34 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
                   <option value="Hyderabad">Hyderabad</option>
                   <option value="Kolkata">Kolkata</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Status
+                </label>
+                <div className="flex items-center space-x-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="is_active"
+                      checked={formData.is_active === true}
+                      onChange={() => handleChange('is_active', true)}
+                      className="mr-2 text-green-600 focus:ring-green-500"
+                    />
+                    <span className="text-sm text-gray-700">Active</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="is_active"
+                      checked={formData.is_active === false}
+                      onChange={() => handleChange('is_active', false)}
+                      className="mr-2 text-red-600 focus:ring-red-500"
+                    />
+                    <span className="text-sm text-gray-700">Inactive</span>
+                  </label>
+                </div>
               </div>
 
               <div className="flex space-x-3 pt-4">

@@ -71,6 +71,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           console.log('Auth state change - fetching profile for:', session.user.id)
           await fetchUserProfileWithRetry(session.user.id, "auth state change")
+          
+          // Check if user is active after profile fetch
+          const profile = userProfile
+          if (profile && profile.is_active === false) {
+            console.log('User is inactive, signing out')
+            await forceSignOut()
+            return
+          }
+          
           console.log('Auth state change - profile fetch completed successfully')
           setLoading(false)
         } catch (error) {
@@ -249,6 +258,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(data.user)
         try {
           await fetchUserProfile(data.user.id, "sign in")
+          
+          // Check if user is active after fetching profile
+          if (userProfile && userProfile.is_active === false) {
+            await signOut()
+            return { error: { message: 'Your account has been deactivated. Please contact your administrator.' } }
+          }
         } catch (profileError) {
           console.error('Profile fetch failed during sign in:', profileError)
           // Don't set loading to false here - let the retry mechanism handle it

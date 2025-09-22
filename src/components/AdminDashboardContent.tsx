@@ -34,7 +34,8 @@ const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ setActive
       // Fetch active employees count
       const { count: activeEmployeesCount, error: employeesError } = await supabase
         .from('user_profiles')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true);
 
       if (employeesError) {
         console.error('Error fetching active employees count:', employeesError);
