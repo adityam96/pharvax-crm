@@ -132,11 +132,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log(`Profile fetch successful on attempt ${attempts}`)
         return // Success!
       } catch (error) {
-        console.log(`Profile fetch attempt ${attempts} failed:`, error)
-        
-        // If this was the last attempt or we're out of time, throw the error
+        // Only log as warning until the final attempt
         if (attempts >= maxAttempts || (Date.now() - startTime) >= maxDuration) {
+          console.error(`Profile fetch attempt ${attempts} failed (final attempt):`, error)
           throw error
+        } else {
+          console.warn(`Profile fetch attempt ${attempts} failed (will retry):`, error)
         }
         
         // Wait before next attempt (but don't exceed total time limit)
