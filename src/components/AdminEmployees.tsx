@@ -108,7 +108,7 @@ const AdminEmployees: React.FC = () => {
 
   const updateEmployee = async (updatedEmployee) => {
     try {
-      console.log('Updating employee:', updatedEmployee);
+      console.log('Updating employee:', updatedEmployee, updatedEmployee.is_active);
       
       const { error } = await supabase
         .from('user_profiles')
