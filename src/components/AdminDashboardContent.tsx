@@ -1,15 +1,66 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Upload, Plus, TrendingUp, Users, UserCheck } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface AdminDashboardContentProps {
   setActiveTab: (tab: string) => void;
 }
 
 const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ setActiveTab }) => {
-  const stats = [
-    { label: 'Open Leads', value: '1,247', icon: UserCheck, color: 'bg-green-500' },
-    { label: 'Active Employees', value: '24', icon: Users, color: 'bg-green-500' },
-  ];
+  const [stats, setStats] = useState([
+    { label: 'Open Leads', value: '0', icon: UserCheck, color: 'bg-green-500' },
+    { label: 'Active Employees', value: '0', icon: Users, color: 'bg-green-500' },
+  ]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  const fetchDashboardStats = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch open leads count
+      const { count: openLeadsCount, error: leadsError } = await supabase
+        .from('leads')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'Open');
+
+      if (leadsError) {
+        console.error('Error fetching open leads count:', leadsError);
+      }
+
+      // Fetch active employees count
+      const { count: activeEmployeesCount, error: employeesError } = await supabase
+        .from('user_profiles')
+        .select('*', { count: 'exact', head: true });
+
+      if (employeesError) {
+        console.error('Error fetching active employees count:', employeesError);
+      }
+
+      // Update stats with real data
+      setStats([
+        { 
+          label: 'Open Leads', 
+          value: openLeadsCount?.toString() || '0', 
+          icon: UserCheck, 
+          color: 'bg-green-500' 
+        },
+        { 
+          label: 'Active Employees', 
+          value: activeEmployeesCount?.toString() || '0', 
+          icon: Users, 
+          color: 'bg-green-500' 
+        },
+      ]);
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex-1 bg-gray-50">
@@ -34,7 +85,13 @@ const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ setActive
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {loading ? (
+                        <div className="w-8 h-8 border-2 border-gray-300 border-t-green-500 rounded-full animate-spin"></div>
+                      ) : (
+                        stat.value
+                      )}
+                    </p>
                   </div>
                   <div className={`p-3 rounded-lg ${stat.color}`}>
                     <Icon className="w-6 h-6 text-white" />
