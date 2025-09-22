@@ -95,12 +95,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   function withTimeout<T>(p: Promise<T>, ms: number, label = 'Timeout'): Promise<T> {
     try {
       return new Promise<T>((resolve, reject) => {
-      const t = setTimeout(() => reject(new Error(label)), ms);
-      p.then(
-        (v) => { clearTimeout(t); resolve(v); },
-        (e) => { clearTimeout(t); resolve(e); }
-      );
-    });
+        const t = setTimeout(() => reject(new Error(label)), ms);
+        p.then(
+          (v) => { clearTimeout(t); resolve(v); },
+          (e) => { clearTimeout(t); reject(e); }
+        );
+      });
     } catch (error) {
       // do nothing
     }
@@ -160,35 +160,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('About to query user_profiles table...')
       console.log('Querying with userId:', userId)
 
-      // Retry logic for database calls
-      let result;
-      let attempts = 0;
-      const maxAttempts = 1;
-      
-      while (attempts < maxAttempts) {
-        attempts++;
-        console.log(`Database query attempt ${attempts}/${maxAttempts}`);
-        
-        try {
-          result = await withTimeout(
-            supabase
-              .from('user_profiles')
-              .select('*')
-              .eq('user_id', userId)
-              .maybeSingle(),
-            attempts === 1 ? 1_000 : 3_000, // First attempt gets 5s, others get 3s
-            `DB timeout: user_profiles read exceeded ${attempts === 1 ? 5 : 3}s (attempt ${attempts})`
-          );
-          break; // Success, exit retry loop
-        } catch (error) {
-          console.log(`Attempt ${attempts} failed:`, error);
-          if (attempts === maxAttempts) {
-            throw error; // Re-throw on final attempt
-          }
-          // Wait before retry
-          await sleep(1000);
-        }
-      }
+      const result = await withTimeout(
+        supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle(),
+        5_000,
+        `DB timeout: user_profiles read exceeded 5s`
+      );
 
       const { data, error } = result;
       console.log('Query completed.')
