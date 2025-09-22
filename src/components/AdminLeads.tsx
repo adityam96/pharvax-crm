@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
-import { Search, Filter, Download, Calendar, ChevronDown, Upload, Plus, X, Mail, Phone, Building, User, Edit, UserCheck } from 'lucide-react';
+import { Search, Filter, Download, Calendar, ChevronDown, Upload, Plus, X, Mail, Phone, Building, User, Edit, UserCheck, FileText, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 const AdminLeads: React.FC = () => {
@@ -14,6 +14,7 @@ const AdminLeads: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [allLeads, setAllLeads] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   // Fetch data from database
   useEffect(() => {
@@ -235,7 +236,10 @@ const AdminLeads: React.FC = () => {
               <Plus className="w-4 h-4" />
               <span>Add Lead</span>
             </button>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium flex items-center space-x-2">
+            <button 
+              onClick={() => setShowImportModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium flex items-center space-x-2"
+            >
               <Upload className="w-4 h-4" />
               <span>Import CSV</span>
             </button>
@@ -540,6 +544,18 @@ const AdminLeads: React.FC = () => {
           employees={employees}
         />
       )}
+
+      {/* CSV Import Modal */}
+      {showImportModal && (
+        <CSVImportModal 
+          onClose={() => setShowImportModal(false)}
+          onImportComplete={() => {
+            setShowImportModal(false);
+            fetchLeads(); // Refresh leads after import
+          }}
+          employees={employees}
+        />
+      )}
     </div>
   );
 };
@@ -836,6 +852,42 @@ const EditLeadModal = ({ lead, onSave, onClose, employees }) => {
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+};
+
+// CSV Import Modal Component
+const CSVImportModal = ({ onClose, onImportComplete, employees }) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-md w-full">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">Import CSV</h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+          >
+            <X className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
+        <div className="p-6">
+          <p className="text-gray-600 mb-4">CSV import functionality would be implemented here.</p>
+          <div className="flex space-x-3">
+            <button
+              onClick={onClose}
+              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-md transition-colors duration-200 font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onImportComplete}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors duration-200 font-medium"
+            >
+              Import
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
