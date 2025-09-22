@@ -48,15 +48,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setLoading(false)
         }).catch((err) => {
           console.error('Profile fetch failed:', err)
-          setLoading(false)
+          setLoading(true)
         })
       } else {
         console.log('No user or error, stopping loading')
-        setLoading(false)
+        setLoading(true)
       }
     }).catch(() => {
       console.log('Initial user fetch failed, stopping loading')
-      setLoading(false)
+      setLoading(true)
     })
 
     // // Listen for auth changes only if configured
