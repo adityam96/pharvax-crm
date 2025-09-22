@@ -37,7 +37,7 @@ const AdminEmployees: React.FC = () => {
       const transformedData = profiles.map(profile => ({
         id: profile.id,
         name: profile.name,
-        email: profile.email_id
+        email: profile.email_id,
         phone: profile.phone,
         role: profile.role === 'admin' ? 'Administrator' : profile.position || 'Sales Representative',
         callsMade: 0, // TODO: Calculate from leads table
