@@ -117,18 +117,6 @@ const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ setActive
                 Upload a CSV file to import multiple leads at once
               </p>
             </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer">
-              <div className="flex items-center justify-center mb-4">
-                <div className="p-4 bg-green-100 rounded-lg">
-                  <Plus className="w-8 h-8 text-green-600" />
-                </div>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">Generate Leads</h3>
-              <p className="text-gray-600 text-center text-sm">
-                Create new leads manually or through automated tools
-              </p>
-            </div>
           </div>
         </div>
 
