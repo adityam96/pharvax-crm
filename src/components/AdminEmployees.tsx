@@ -108,14 +108,15 @@ const AdminEmployees: React.FC = () => {
 
   const updateEmployee = async (updatedEmployee) => {
     try {
+      console.log('Updating employee:', updatedEmployee);
+      
       const { error } = await supabase
         .from('user_profiles')
         .update({
-          role: updatedEmployee.role === 'Administrator' ? 'admin' : 'employee',
-          position: updatedEmployee.role,
+          phone: updatedEmployee.phone,
           department: updatedEmployee.department,
           location: updatedEmployee.location,
-          phone: updatedEmployee.phone,
+          position: updatedEmployee.role,
           is_active: updatedEmployee.is_active
         })
         .eq('id', updatedEmployee.id);
@@ -126,6 +127,8 @@ const AdminEmployees: React.FC = () => {
         return;
       }
 
+      console.log('Employee updated successfully');
+      alert('Employee updated successfully!');
       setShowEditModal(false);
       setEditingEmployee(null);
       fetchEmployees();
