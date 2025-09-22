@@ -108,6 +108,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
     
+  const fetchUserProfileWithRetry = async (userId: string, caller: string) => {
+    console.log(`fetchUserProfileWithRetry called for userId: ${userId} from: ${caller}`)
+    
+    const startTime = Date.now()
+    const maxDuration = 10000 // 10 seconds
+    let attempts = 0
+    const maxAttempts = 5
+    
+    while (attempts < maxAttempts) {
+      const elapsedTime = Date.now() - startTime
+      
+      if (elapsedTime >= maxDuration) {
+        console.log(`Profile fetch timeout after ${elapsedTime}ms, giving up`)
+        throw new Error(`Profile fetch timeout after 10 seconds`)
+      }
+      
+      attempts++
+      console.log(`Profile fetch attempt ${attempts}/${maxAttempts} (elapsed: ${elapsedTime}ms)`)
+      
+      try {
+        await fetchUserProfile(userId, `${caller} - attempt ${attempts}`)
+        console.log(`Profile fetch successful on attempt ${attempts}`)
+        return // Success!
+      } catch (error) {
+        console.log(`Profile fetch attempt ${attempts} failed:`, error)
+        
+        // If this was the last attempt or we're out of time, throw the error
+        if (attempts >= maxAttempts || (Date.now() - startTime) >= maxDuration) {
+          throw error
+        }
+        
+        // Wait before next attempt (but don't exceed total time limit)
+        const waitTime = Math.min(2000, maxDuration - (Date.now() - startTime))
+        if (waitTime > 0) {
+          console.log(`Waiting ${waitTime}ms before next attempt...`)
+          await sleep(waitTime)
+        }
+      }
+    }
+    
+    throw new Error(`Profile fetch failed after ${maxAttempts} attempts`)
+  }
+
   const fetchUserProfile = async (userId: string, caller: string) => {
     console.log('fetchUserProfile called with userId:', userId, ' from: ', caller)
     if (!isConfigured) return
