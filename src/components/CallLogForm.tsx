@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { Calendar, Save } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { getChatAndFollowUps, supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 interface CallLogData {
@@ -77,20 +77,7 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
       setActivityLoading(true);
 
       // Fetch chats and followups for the selected lead
-      const [chatsResponse, followupsResponse] = await Promise.all([
-        supabase
-          .from('chats')
-          .select('*')
-          .eq('lead_id', leadId)
-          .order('created_at', { ascending: false })
-          .limit(5),
-        supabase
-          .from('followups')
-          .select('*')
-          .eq('lead_id', leadId)
-          .order('created_at', { ascending: false })
-          .limit(5)
-      ]);
+      const [chatsResponse, followupsResponse] = await getChatAndFollowUps(leadId);
 
       console.log('Fetched chats:', chatsResponse);
       console.log('Fetched followups:', followupsResponse);
@@ -151,6 +138,8 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
 
   const getCallTitle = (callStatus: string) => {
     switch (callStatus) {
+      case 'list-sent':
+        return 'List Sent';
       case 'follow-up-scheduled':
         return 'Follow-up Call';
       case 'no-answer':
@@ -351,6 +340,7 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
             required
           >
             <option value="">Select call status</option>
+            <option value="list-sent">List Sent</option>
             <option value="follow-up-scheduled">Follow Up Scheduled</option>
             <option value="no-answer">Didn't Pick Up</option>
             <option value="denied">Denied</option>

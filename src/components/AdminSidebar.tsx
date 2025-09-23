@@ -16,37 +16,37 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab, us
     { id: 'leads', label: 'Leads', icon: UserCheck },
     { id: 'employees', label: 'Employee Management', icon: Users },
     { id: 'reports', label: 'Reports', icon: FileText },
-    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   return (
-    <div className="w-64 bg-slate-800 text-white min-h-screen flex flex-col sticky top-0">
+    <div className="w-64 text-white h-screen flex flex-col sticky top-0"
+      style={{ backgroundColor: 'rgb(11,41,105)' }}
+    >
       {/* Logo and Company Name */}
-      <div className="p-6 border-b border-slate-700">
+      <div className="p-6 border-b border-slate-700 bg-white">
         <div className="flex items-center space-x-2 mb-4">
-          <img 
-            src="/logo.png" 
-            alt="Pharvax Biosciences" 
+          <img
+            src="/logo.png"
+            alt="Pharvax Biosciences"
             className="h-12 w-auto"
           />
         </div>
-        <div className="text-sm text-gray-300">{userData?.name || 'Admin'}</div>
-        <div className="text-xs text-gray-400">{userData?.role || 'Administrator'}</div>
+        <div className="text-lg text-black">{userData?.name || 'Admin'}</div>
+        <div className="text-xs text-black">{userData?.role || 'Administrator'}</div>
       </div>
 
       {/* Navigation Menu */}
-      <nav className="flex-1 py-4">
+      <nav className="flex-1 py-4 overflow-y-auto">
         {menuItems.map((item) => {
           const Icon = item.icon;
           return (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center space-x-3 px-6 py-3 text-left transition-colors duration-200 ${
-                activeTab === item.id
-                  ? 'bg-green-600 border-r-2 border-green-400'
-                  : 'hover:bg-slate-700'
-              }`}
+              className={`w-full flex items-center space-x-3 px-6 py-3 text-left transition-colors duration-200 ${activeTab === item.id
+                ? 'bg-green-600 border-r-2 border-green-400'
+                : 'hover:bg-green-900'
+                }`}
             >
               <Icon className="w-5 h-5" />
               <span>{item.label}</span>
@@ -56,8 +56,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab, us
       </nav>
 
       {/* Logout Button */}
-      <div className="p-4 border-t border-slate-700">
-        <button 
+      <div className="p-4 border-t border-slate-700 mt-auto">
+        <button
           onClick={() => {
             console.log('Admin logout button clicked')
             // Use more aggressive logout to ensure session is cleared

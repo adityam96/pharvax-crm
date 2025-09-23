@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { Search, Filter, Download, Calendar, ChevronDown, Upload, Plus, X, Mail, Phone, Building, User, Edit, UserCheck, FileText, AlertCircle, CheckCircle } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase, getAllLeads, getAllEmployees, getChatAndFollowUps } from '../lib/supabase';
 import { userCache } from '../lib/userCache';
 
 const AdminLeads: React.FC = () => {
@@ -33,13 +33,7 @@ const AdminLeads: React.FC = () => {
         console.log('Admin user confirmed from cache');
       }
 
-      const { data, error } = await supabase
-        .from('leads')
-        .select(`
-          *,
-          assigned_to_profile:user_profiles!assigned_to(name)
-        `)
-        .order('created_at', { ascending: false });
+      const { data, error } = await getAllLeads();
 
       if (error) {
         console.error('Error fetching leads:', error);
@@ -71,10 +65,8 @@ const AdminLeads: React.FC = () => {
 
   const fetchEmployees = async () => {
     try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('id, name')
-        .order('name');
+
+      const { data, error } = await getAllEmployees();
 
       if (error) {
         console.error('Error fetching employees:', error);
@@ -548,20 +540,7 @@ const RecentActivitySection = ({ leadId }) => {
       setActivityLoading(true);
 
       // Fetch chats and followups for the selected lead
-      const [chatsResponse, followupsResponse] = await Promise.all([
-        supabase
-          .from('chats')
-          .select('*')
-          .eq('lead_id', leadId)
-          .order('created_at', { ascending: false })
-          .limit(10),
-        supabase
-          .from('followups')
-          .select('*')
-          .eq('lead_id', leadId)
-          .order('created_at', { ascending: false })
-          .limit(10)
-      ]);
+      const [chatsResponse, followupsResponse] = await getChatAndFollowUps(leadId);
 
       console.log('Fetched chats:', chatsResponse, 'followups:', followupsResponse);
 
@@ -621,6 +600,8 @@ const RecentActivitySection = ({ leadId }) => {
 
   const getCallTitle = (callStatus: string) => {
     switch (callStatus) {
+      case 'list-sent':
+        return 'List Sent';
       case 'follow-up-scheduled':
         return 'Follow-up Call';
       case 'no-answer':

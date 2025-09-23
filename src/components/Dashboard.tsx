@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { Search, Plus, GripVertical } from 'lucide-react';
 import LeadCard from './LeadCard';
 import CallLogForm from './CallLogForm';
-import { supabase } from '../lib/supabase';
+import { supabase, getLeadsAssignedToCurrentUser, getUserProfile } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { userCache } from '../lib/userCache';
 
@@ -55,15 +55,11 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
       if (!currentUserProfile) {
         // Fetch from database if not in cache
         console.log('Fetching user profile from database for user ID:', user.id);
-        const { data: profileData, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('id')
-          .eq('id', user.id)
-          .single();
+        const { data: profileData } = await getUserProfile(user.id);
 
-        console.log('Fetched user profile:', profileData, 'error:', profileError);
-        if (profileError) {
-          console.error('Error fetching user profile:', profileError);
+        console.log('Fetched user profile:', profileData);
+        if (!profileData) {
+          console.error('Error fetching user profile:');
           return;
         }
 
@@ -73,14 +69,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
 
       console.log('Using user profile:', currentUserProfile);
       // Fetch leads assigned to current user
-      const { data, error } = await supabase
-        .from('leads')
-        .select(`
-          *,
-          assigned_to_profile:user_profiles!assigned_to(name)
-        `)
-        .eq('assigned_to', currentUserProfile.id)
-        .order('created_at', { ascending: false });
+      const { data, error } = await getLeadsAssignedToCurrentUser(currentUserProfile.id);
 
       console.log('Fetched leads:', data, 'error:', error);
       if (error) {
@@ -210,14 +199,10 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
     let currentUserProfile = userCache.getProfile();
 
     if (!currentUserProfile) {
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('user_id', currentUser.id)
-        .single();
+      const { data: profileData } = await getUserProfile(currentUser.id);
 
-      if (profileError) {
-        throw new Error(`Error fetching user profile: ${profileError.message}`);
+      if (!profileData) {
+        throw new Error(`Error fetching user profile`);
       }
 
       currentUserProfile = profileData;

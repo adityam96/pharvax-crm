@@ -32,9 +32,9 @@ function AdminDashboard({ userData }: AdminDashboardProps) {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <AdminSidebar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
+      <AdminSidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
         userData={userData}
       />
       <div className="flex-1">

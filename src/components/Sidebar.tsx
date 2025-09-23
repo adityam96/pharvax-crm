@@ -17,18 +17,20 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userData }) 
   ];
 
   return (
-    <div className="w-64 bg-slate-800 text-white h-screen flex flex-col">
+    <div className="w-64 text-white h-screen flex flex-col sticky top-0"
+      style={{ backgroundColor: 'rgb(11,41,105)' }}
+    >
       {/* Logo and Company Name */}
-      <div className="p-6 border-b border-slate-700">
+      <div className="p-6 border-b border-slate-700 bg-white">
         <div className="flex items-center space-x-2 mb-4">
-          <img 
-            src="/logo.png" 
-            alt="Pharvax Biosciences" 
+          <img
+            src="/logo.png"
+            alt="Pharvax Biosciences"
             className="h-12 w-auto"
           />
         </div>
-        <div className="text-sm text-gray-300">{userData?.name || 'Employee'}</div>
-        <div className="text-xs text-gray-400">{userData?.role || 'Sales Representative'}</div>
+        <div className="text-sm text-black">{userData?.name || 'Employee'}</div>
+        <div className="text-xs text-black">{userData?.role || 'Sales Representative'}</div>
       </div>
 
       {/* Navigation Menu */}
@@ -39,11 +41,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userData }) 
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center space-x-3 px-6 py-3 text-left transition-colors duration-200 ${
-                activeTab === item.id
-                  ? 'bg-green-600 border-r-2 border-green-400'
-                  : 'hover:bg-slate-700'
-              }`}
+              className={`w-full flex items-center space-x-3 px-6 py-3 text-left transition-colors duration-200 ${activeTab === item.id
+                ? 'bg-green-600 border-r-2 border-green-400'
+                : 'hover:bg-green-900'
+                }`}
             >
               <Icon className="w-5 h-5" />
               <span>{item.label}</span>
@@ -54,7 +55,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userData }) 
 
       {/* Logout Button */}
       <div className="p-4 border-t border-slate-700">
-        <button 
+        <button
           onClick={() => {
             console.log('Employee logout button clicked')
             // Use more aggressive logout to ensure session is cleared

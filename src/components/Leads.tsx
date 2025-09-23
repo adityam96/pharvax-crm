@@ -1,7 +1,7 @@
 import React from 'react';
 import { useEffect } from 'react';
 import { UserCheck, Search, Filter, X, Mail, Phone, Building, User, Calendar } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase, getLeadsAssignedToCurrentUser, getUserProfile, getChatAndFollowUps } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { userCache } from '../lib/userCache';
 
@@ -41,14 +41,10 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
 
       if (!currentUserProfile) {
         // Fetch from database if not in cache
-        const { data: profileData, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
+        const { data: profileData } = await getUserProfile(user.id);
 
-        if (profileError) {
-          console.error('Error fetching user profile:', profileError);
+        if (!profileData) {
+          console.error('Error fetching user profile: Profile not found');
           return;
         }
 
@@ -57,14 +53,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
       }
 
       // Fetch leads assigned to current user
-      const { data, error } = await supabase
-        .from('leads')
-        .select(`
-          *,
-          assigned_to_profile:user_profiles!assigned_to(name)
-        `)
-        .eq('assigned_to', currentUserProfile.id)
-        .order('created_at', { ascending: false });
+      const { data, error } = await getLeadsAssignedToCurrentUser(currentUserProfile.id);
 
       if (error) {
         console.error('Error fetching leads:', error);
@@ -98,20 +87,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
       setActivityLoading(true);
 
       // Fetch chats and followups for the selected lead
-      const [chatsResponse, followupsResponse] = await Promise.all([
-        supabase
-          .from('chats')
-          .select('*')
-          .eq('lead_id', leadId)
-          .order('created_at', { ascending: false })
-          .limit(10),
-        supabase
-          .from('followups')
-          .select('*')
-          .eq('lead_id', leadId)
-          .order('created_at', { ascending: false })
-          .limit(10)
-      ]);
+      const [chatsResponse, followupsResponse] = await getChatAndFollowUps(leadId);
 
       const { data: chats, error: chatsError } = chatsResponse;
       const { data: followups, error: followupsError } = followupsResponse;
@@ -169,6 +145,8 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
 
   const getCallTitle = (callStatus: string) => {
     switch (callStatus) {
+      case 'list-sent':
+        return 'List Sent';
       case 'follow-up-scheduled':
         return 'Follow-up Call';
       case 'no-answer':

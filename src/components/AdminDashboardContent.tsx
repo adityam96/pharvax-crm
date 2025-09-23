@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, Plus, TrendingUp, Users, UserCheck, X, FileText, AlertCircle, CheckCircle } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase, getOpenLeadsCount, getActiveEmployeesCount, getAllActiveEmployees } from '../lib/supabase';
 import { userCache } from '../lib/userCache';
 
 interface AdminDashboardContentProps {
@@ -22,7 +22,7 @@ const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ setActive
   const fetchDashboardStats = async () => {
     try {
       setLoading(true);
-      
+
       // Check if we can use cached data for current user context
       const cachedProfile = userCache.getProfile();
       if (cachedProfile && cachedProfile.role === 'admin') {
@@ -30,20 +30,14 @@ const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ setActive
       }
 
       // Fetch open leads count
-      const { count: openLeadsCount, error: leadsError } = await supabase
-        .from('leads')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'Open');
+      const { count: openLeadsCount, error: leadsError } = await getOpenLeadsCount();
 
       if (leadsError) {
         console.error('Error fetching open leads count:', leadsError);
       }
 
       // Fetch active employees count
-      const { count: activeEmployeesCount, error: employeesError } = await supabase
-        .from('user_profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_active', true);
+      const { count: activeEmployeesCount, error: employeesError } = await getActiveEmployeesCount();
 
       if (employeesError) {
         console.error('Error fetching active employees count:', employeesError);
@@ -191,11 +185,7 @@ const CSVImportModal = ({ onClose, onImportComplete }) => {
 
   const fetchEmployees = async () => {
     try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('id, name')
-        .eq('is_active', true)
-        .order('name');
+      const { data, error } = await getAllActiveEmployees();
 
       if (error) {
         console.error('Error fetching employees:', error);

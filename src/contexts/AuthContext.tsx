@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
-import { supabase, getCurrentUser, onAuthStateChange, isSupabaseConfigured, signInWithPassword, supabaseSignUp, supabaseSignOut } from '../lib/supabase'
+import { supabase, getCurrentUser, onAuthStateChange, isSupabaseConfigured, signInWithPassword, supabaseSignUp, supabaseSignOut, getUserProfile } from '../lib/supabase'
 import { userCache } from '../lib/userCache'
 
 interface AuthContextType {
@@ -200,11 +200,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Querying with userId:', userId)
 
       const result = await withTimeout(
-        supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', userId)
-          .maybeSingle(),
+        getUserProfile(userId),
         5_000,
         `DB timeout: user_profiles read exceeded 5s`
       );
@@ -292,7 +288,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           // Check if user is active after fetching profile
           if (userProfile && userProfile.is_active === false) {
-            await signOut()
+            await supabaseSignOut()
             return { error: { message: 'Your account has been deactivated. Please contact your administrator.' } }
           }
         } catch (profileError) {
@@ -426,7 +422,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Try Supabase signOut if configured
       if (isConfigured) {
-        await supabase.auth.signOut()
+        await signOut()
       }
 
       // Small delay to ensure state is cleared, then redirect

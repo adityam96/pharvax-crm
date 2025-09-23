@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { Search, Filter, Edit, Trash2, ChevronDown, X, User, Mail, Phone, Calendar, UserCheck, TrendingUp, FileText } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { getAllEmployees, supabase } from '../lib/supabase';
 import { userCache } from '../lib/userCache';
 
 const AdminEmployees: React.FC = () => {
@@ -30,10 +30,7 @@ const AdminEmployees: React.FC = () => {
       }
 
       // First get user profiles
-      const { data: profiles, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data: profiles, error: profileError } = await getAllEmployees();
 
       if (profileError) {
         console.error('Error fetching user profiles:', profileError);
@@ -238,8 +235,8 @@ const AdminEmployees: React.FC = () => {
                     <td className="py-3 px-4 text-gray-900">{employee.location}</td>
                     <td className="py-3 px-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${employee.is_active
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
                         }`}>
                         {employee.is_active ? 'Active' : 'Inactive'}
                       </span>
@@ -502,8 +499,8 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
                         <p className="text-sm text-blue-600">{interaction.company}</p>
                       </div>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${interaction.status === 'Open' ? 'bg-green-100 text-green-800' :
-                          interaction.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-gray-100 text-gray-800'
+                        interaction.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
                         }`}>
                         {interaction.status}
                       </span>

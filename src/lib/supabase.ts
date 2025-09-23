@@ -81,3 +81,132 @@ export const signInWithPassword = async (email: string, password: string) => {
     return { user: null, error }
   }
 }
+
+export const getUserProfile = async (userId: string) => {
+  try {
+    const result = await logSupabaseCall('getUserProfile', () => supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle())
+    return result
+  } catch (error) {
+    return { user: null, error }
+  }
+}
+
+export const getLeadsAssignedToCurrentUser = async (userProfileId: string) => {
+  try {
+    const { data, error } = await logSupabaseCall('getLeadsAssignedToCurrentUser', () => supabase
+      .from('leads')
+      .select(`
+              *,
+              assigned_to_profile:user_profiles!assigned_to(name)
+            `)
+      .eq('assigned_to', userProfileId)
+      .order('created_at', { ascending: false }))
+    return { data, error }
+  } catch (error) {
+    return { user: null, error }
+  }
+}
+
+export const getAllLeads = async () => {
+  try {
+    const { data, error } = await logSupabaseCall('getAllLeads', () => supabase
+      .from('leads')
+      .select(`
+          *,
+          assigned_to_profile:user_profiles!assigned_to(name)
+        `)
+      .order('created_at', { ascending: false }))
+    return { data, error }
+  } catch (error) {
+    return { user: null, error }
+  }
+}
+
+export const getOpenLeadsCount = async () => {
+  try {
+    const result: any = await logSupabaseCall('getOpenLeadsCount', () =>
+      supabase
+        .from('leads')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'Open')
+    )
+
+    // When using head: true, Supabase returns the count on result.count (data is null)
+    const count: number = result?.count ?? 0
+    const error = result?.error ?? null
+    return { count, error }
+  } catch (error) {
+    console.error('getOpenLeadsCount failed:', error)
+    return { count: 0, error }
+  }
+}
+
+export const getActiveEmployeesCount = async () => {
+  try {
+    const result: any = await logSupabaseCall('getActiveEmployeesCount', () =>
+      supabase
+        .from('user_profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true)
+    )
+
+    // supabase returns count separately when head:true
+    const count: number = result?.count ?? 0
+    const error = result?.error ?? null
+    return { count, error }
+  } catch (error) {
+    console.error('getActiveEmployeesCount failed:', error)
+    return { count: 0, error }
+  }
+}
+
+export const getAllActiveEmployees = async () => {
+  try {
+    const { data, error } = await logSupabaseCall('getAllActiveEmployees', () => supabase
+      .from('user_profiles')
+      .select('id, name')
+      .eq('is_active', true)
+      .order('name'))
+    return { data, error }
+  } catch (error) {
+    return { user: null, error }
+  }
+}
+
+export const getAllEmployees = async () => {
+  try {
+    const { data, error } = await logSupabaseCall('getAllEmployees', () => supabase
+      .from('user_profiles')
+      .select('*')
+      .order('created_at', { ascending: false }))
+    return { data, error }
+  } catch (error) {
+    return { user: null, error }
+  }
+}
+
+export const getChatAndFollowUps = async (leadId: string) => {
+  try {
+    const [chatsResponse, followupsResponse] = await logSupabaseCall('getChatAndFollowUps', () => Promise.all([
+      supabase
+        .from('chats')
+        .select('*')
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false })
+        .limit(10),
+      supabase
+        .from('followups')
+        .select('*')
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false })
+        .limit(10)
+    ]))
+    return [chatsResponse, followupsResponse]
+  } catch (error) {
+    return { user: null, error }
+  }
+}
