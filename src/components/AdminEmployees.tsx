@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { Search, Filter, Edit, Trash2, ChevronDown, X, User, Mail, Phone, Calendar, UserCheck, TrendingUp, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { userCache } from '../lib/userCache';
 
 const AdminEmployees: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,6 +22,12 @@ const AdminEmployees: React.FC = () => {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
+      
+      // Check if we can use cached data for current user context
+      const cachedProfile = userCache.getProfile();
+      if (cachedProfile && cachedProfile.role === 'admin') {
+        console.log('Admin user confirmed from cache');
+      }
       
       // First get user profiles
       const { data: profiles, error: profileError } = await supabase

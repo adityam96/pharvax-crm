@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
 import { supabase, getCurrentUser, onAuthStateChange, isSupabaseConfigured } from '../lib/supabase'
+import { userCache } from '../lib/userCache'
 
 interface AuthContextType {
   user: User | null
@@ -31,6 +32,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     console.log("In useeffect")
+    
+    // Check cache first
+    const cachedUser = userCache.getUser();
+    const cachedProfile = userCache.getProfile();
+    
+    if (cachedUser && cachedProfile && userCache.isValid()) {
+      console.log('Using cached user data');
+      setUser(cachedUser);
+      setUserProfile(cachedProfile);
+      setLoading(false);
+      return;
+    }
+    
     // If Supabase is not configured, just stop loading
     if (!isConfigured) {
       console.log('Supabase not configured, stopping loading')
@@ -43,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Initial user fetch result:', { user: user?.email, error })
       if (!error && user) {
         setUser(user)
+        userCache.setUser(user)
         fetchUserProfileWithRetry(user.id, "initial user fetch").then(() => {
           console.log('Profile fetch completed, stopping loading')
           setLoading(false)
@@ -67,6 +82,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = onAuthStateChange(async (event, session) => {
       console.log('Auth state change:', event, session?.user?.email || 'no user', session?.user)
       setUser(session?.user ?? null)
+      
+      if (session?.user) {
+        userCache.setUser(session.user)
+      } else {
+        userCache.clear()
+      }
+      
       if (session?.user) {
         try {
           console.log('Auth state change - fetching profile for:', session.user.id)
@@ -201,6 +223,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       console.log('Setting user profile to:', data)
       setUserProfile(data)
+      userCache.setProfile(data)
     } catch (error) {
       console.error('Error fetching user profile:', error)
       
@@ -235,6 +258,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         setUser(mockUser as User)
         setUserProfile(mockProfile)
+        userCache.setUser(mockUser)
+        userCache.setProfile(mockProfile)
         setLoading(false)
         return { error: null }
       } else {
@@ -256,6 +281,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (data.user) {
         setUser(data.user)
+        userCache.setUser(data.user)
         try {
           await fetchUserProfile(data.user.id, "sign in")
           
@@ -348,6 +374,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Clearing user state')
       setUser(null)
       setUserProfile(null)
+      userCache.clear()
       console.log('User state cleared - should redirect to login')
       
       // Force a re-render by setting loading briefly
@@ -387,6 +414,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Clear state first
       setUser(null)
       setUserProfile(null)
+      userCache.clear()
       setLoading(false)
       
       // Clear all possible storage locations

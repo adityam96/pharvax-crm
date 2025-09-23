@@ -5,6 +5,7 @@ import LeadCard from './LeadCard';
 import CallLogForm from './CallLogForm';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { userCache } from '../lib/userCache';
 
 interface Lead {
   id: string;
@@ -48,16 +49,24 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
     try {
       setLoading(true);
       
-      // Get current user's profile to get their ID
-      const { data: currentUserProfile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+      // Try to get profile from cache first
+      let currentUserProfile = userCache.getProfile();
+      
+      if (!currentUserProfile) {
+        // Fetch from database if not in cache
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
 
-      if (profileError) {
-        console.error('Error fetching user profile:', profileError);
-        return;
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+          return;
+        }
+        
+        currentUserProfile = profileData;
+        userCache.setProfile(profileData);
       }
 
       // Fetch leads assigned to current user
@@ -133,13 +142,16 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
   };
 
   const saveExistingLeadCall = async (lead: Lead, callData: any) => {
+    // Get current user from cache or context
+    const currentUser = userCache.getUser() || user;
+    
     // Save chat record
     const { data: chatData, error: chatError } = await supabase
       .from('chats')
       .insert([
         {
           lead_id: lead.id,
-          user_id: user.id,
+          user_id: currentUser.id,
           contact_name: callData.contactName,
           phone: callData.phone,
           mom: callData.mom,
@@ -175,7 +187,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
           {
             chat_id: chatData.id,
             lead_id: lead.id,
-            user_id: user.id,
+            user_id: currentUser.id,
             follow_up_date: callData.followUpDate,
             notes: callData.notes,
             status: 'pending'
@@ -189,15 +201,23 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
   };
 
   const saveNewLeadCall = async (callData: any) => {
-    // Get current user's profile ID
-    const { data: currentUserProfile, error: profileError } = await supabase
-      .from('user_profiles')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
+    // Get current user and profile from cache or fetch
+    const currentUser = userCache.getUser() || user;
+    let currentUserProfile = userCache.getProfile();
+    
+    if (!currentUserProfile) {
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .single();
 
-    if (profileError) {
-      throw new Error(`Error fetching user profile: ${profileError.message}`);
+      if (profileError) {
+        throw new Error(`Error fetching user profile: ${profileError.message}`);
+      }
+      
+      currentUserProfile = profileData;
+      userCache.setProfile(profileData);
     }
 
     // Create new lead
@@ -229,7 +249,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
       .insert([
         {
           lead_id: leadData.id,
-          user_id: user.id,
+          user_id: currentUser.id,
           contact_name: callData.contactName,
           phone: callData.phone,
           mom: callData.mom,
@@ -252,7 +272,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
           {
             chat_id: chatData.id,
             lead_id: leadData.id,
-            user_id: user.id,
+            user_id: currentUser.id,
             follow_up_date: callData.followUpDate,
             notes: callData.notes,
             status: 'pending'

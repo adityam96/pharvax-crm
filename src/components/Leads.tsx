@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { UserCheck, Search, Filter, X, Mail, Phone, Building, User, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { userCache } from '../lib/userCache';
 
 interface LeadsProps {
   onLogCall: (lead: any) => void;
@@ -27,16 +28,24 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
     try {
       setLoading(true);
       
-      // Get current user's profile to get their ID
-      const { data: currentUserProfile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+      // Try to get profile from cache first
+      let currentUserProfile = userCache.getProfile();
+      
+      if (!currentUserProfile) {
+        // Fetch from database if not in cache
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
 
-      if (profileError) {
-        console.error('Error fetching user profile:', profileError);
-        return;
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+          return;
+        }
+        
+        currentUserProfile = profileData;
+        userCache.setProfile(profileData);
       }
 
       // Fetch leads assigned to current user

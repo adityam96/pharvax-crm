@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, Plus, TrendingUp, Users, UserCheck, X, FileText, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { userCache } from '../lib/userCache';
 
 interface AdminDashboardContentProps {
   setActiveTab: (tab: string) => void;
@@ -21,6 +22,12 @@ const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ setActive
   const fetchDashboardStats = async () => {
     try {
       setLoading(true);
+      
+      // Check if we can use cached data for current user context
+      const cachedProfile = userCache.getProfile();
+      if (cachedProfile && cachedProfile.role === 'admin') {
+        console.log('Admin user confirmed from cache');
+      }
 
       // Fetch open leads count
       const { count: openLeadsCount, error: leadsError } = await supabase
