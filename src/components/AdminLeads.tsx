@@ -239,7 +239,8 @@ const AdminLeads: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 bg-gray-50">
+    <>
+      <div className="flex-1 bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
@@ -347,39 +348,6 @@ const AdminLeads: React.FC = () => {
             {assignedToFilter !== 'All' && ` • Assigned to: ${assignedToFilter}`}
             {establishmentTypeFilter !== 'All' && ` • Type: ${establishmentTypeFilter}`}
             {statusFilter !== 'All' && ` • Status: ${statusFilter}`}
-          </p>
-        </div>
-            <select
-              value={callsFilter}
-              onChange={(e) => setCallsFilter(e.target.value)}
-              className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="All">All Calls</option>
-              <option value="0">No Calls</option>
-              <option value="1-3">1-3 Calls</option>
-              <option value="4+">4+ Calls</option>
-            </select>
-            <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-          </div>
-
-          <div className="relative">
-            <input
-              type="text"
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
-              className="border border-gray-300 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Select date range"
-            />
-            <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="p-6">
-        <div className="mb-4">
-          <p className="text-sm text-gray-600">
-            Showing {filteredLeads.length} of {allLeads.length} leads
           </p>
         </div>
 
@@ -590,7 +558,8 @@ const AdminLeads: React.FC = () => {
           employees={employees}
         />
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
