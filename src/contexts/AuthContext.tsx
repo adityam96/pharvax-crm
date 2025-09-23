@@ -262,6 +262,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const mockProfile = {
           name: email === 'admin@pharvax.com' ? 'Admin User' : 'Employee User',
           role: email === 'admin@pharvax.com' ? 'admin' : 'employee'
+          is_active: true
         }
 
         setUser(mockUser as User)
@@ -291,10 +292,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await fetchUserProfile(data.user.id, "sign in")
 
           // Check if user is active after fetching profile
-          if (userProfile && userProfile.is_active === false) {
-            await signOut()
-            return { error: { message: 'Your account has been deactivated. Please contact your administrator.' } }
-          }
         } catch (profileError) {
           console.error('Profile fetch failed during sign in:', profileError)
           // Don't set loading to false here - let the retry mechanism handle it

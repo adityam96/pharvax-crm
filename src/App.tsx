@@ -5,6 +5,7 @@ import LoginPage from './components/LoginPage';
 import SignUpPage from './components/SignUpPage';
 import EmployeeDashboard from './components/EmployeeDashboard';
 import AdminDashboard from './components/AdminDashboard';
+import InactiveUserPage from './components/InactiveUserPage';
 
 function AppContent() {
   const { user, userProfile, loading } = useAuth();
@@ -23,6 +24,10 @@ function AppContent() {
     );
   }
 
+  // Check if user is inactive
+  if (user && userProfile && userProfile.is_active === false) {
+    return <InactiveUserPage />;
+  }
   return (
     <Router>
       <Routes>
