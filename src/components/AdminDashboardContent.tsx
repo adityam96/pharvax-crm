@@ -21,7 +21,7 @@ const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ setActive
   const fetchDashboardStats = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch open leads count
       const { count: openLeadsCount, error: leadsError } = await supabase
         .from('leads')
@@ -44,17 +44,17 @@ const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ setActive
 
       // Update stats with real data
       setStats([
-        { 
-          label: 'Open Leads', 
-          value: openLeadsCount?.toString() || '0', 
-          icon: UserCheck, 
-          color: 'bg-green-500' 
+        {
+          label: 'Open Leads',
+          value: openLeadsCount?.toString() || '0',
+          icon: UserCheck,
+          color: 'bg-green-500'
         },
-        { 
-          label: 'Active Employees', 
-          value: activeEmployeesCount?.toString() || '0', 
-          icon: Users, 
-          color: 'bg-green-500' 
+        {
+          label: 'Active Employees',
+          value: activeEmployeesCount?.toString() || '0',
+          icon: Users,
+          color: 'bg-green-500'
         },
       ]);
     } catch (error) {
@@ -108,7 +108,7 @@ const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ setActive
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Add New Lead</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div 
+            <div
               onClick={() => setShowImportModal(true)}
               className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
             >
@@ -129,21 +129,21 @@ const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ setActive
         <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button 
+            <button
               onClick={() => setActiveTab('leads')}
               className="flex items-center space-x-3 p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors duration-200"
             >
               <UserCheck className="w-5 h-5 text-green-600" />
               <span className="font-medium text-green-900">View All Leads</span>
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab('employees')}
               className="flex items-center space-x-3 p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors duration-200"
             >
               <Users className="w-5 h-5 text-green-600" />
               <span className="font-medium text-green-900">Manage Employees</span>
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab('reports')}
               className="flex items-center space-x-3 p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors duration-200"
             >
@@ -156,7 +156,7 @@ const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ setActive
 
       {/* CSV Import Modal */}
       {showImportModal && (
-        <CSVImportModal 
+        <CSVImportModal
           onClose={() => setShowImportModal(false)}
           onImportComplete={() => {
             setShowImportModal(false);
@@ -174,7 +174,6 @@ const CSVImportModal = ({ onClose, onImportComplete }) => {
   const [csvData, setCsvData] = useState([]);
   const [columnMapping, setColumnMapping] = useState({});
   const [employees, setEmployees] = useState([]);
-  const [selectedEmployee, setSelectedEmployee] = useState('');
   const [importing, setImporting] = useState(false);
   const [importResults, setImportResults] = useState(null);
   const [step, setStep] = useState(1); // 1: Upload, 2: Map Columns, 3: Results
@@ -212,12 +211,12 @@ const CSVImportModal = ({ onClose, onImportComplete }) => {
     }
 
     setFile(uploadedFile);
-    
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target.result;
       const rows = text.split('\n').map(row => row.split(',').map(cell => cell.trim().replace(/"/g, '')));
-      
+
       if (rows.length < 2) {
         alert('CSV file must have at least a header row and one data row');
         return;
@@ -225,9 +224,9 @@ const CSVImportModal = ({ onClose, onImportComplete }) => {
 
       const headers = rows[0];
       const data = rows.slice(1).filter(row => row.some(cell => cell.length > 0));
-      
+
       setCsvData({ headers, data });
-      
+
       // Auto-map common column names
       const mapping = {};
       headers.forEach((header, index) => {
@@ -244,20 +243,15 @@ const CSVImportModal = ({ onClose, onImportComplete }) => {
           mapping.establishment_type = index;
         }
       });
-      
+
       setColumnMapping(mapping);
       setStep(2);
     };
-    
+
     reader.readAsText(uploadedFile);
   };
 
   const handleImport = async () => {
-    if (!selectedEmployee) {
-      alert('Please select an employee to assign the leads to');
-      return;
-    }
-
     if (!columnMapping.name || !columnMapping.email || !columnMapping.phone) {
       alert('Please map at least Name, Email, and Phone columns');
       return;
@@ -269,7 +263,7 @@ const CSVImportModal = ({ onClose, onImportComplete }) => {
     try {
       for (let i = 0; i < csvData.data.length; i++) {
         const row = csvData.data[i];
-        
+
         try {
           const leadData = {
             name: row[columnMapping.name] || '',
@@ -277,7 +271,6 @@ const CSVImportModal = ({ onClose, onImportComplete }) => {
             phone: row[columnMapping.phone] || '',
             company: row[columnMapping.company] || '',
             establishment_type: row[columnMapping.establishment_type] || '',
-            assigned_to: selectedEmployee,
             status: 'Open'
           };
 
@@ -407,9 +400,8 @@ const CSVImportModal = ({ onClose, onImportComplete }) => {
                         ...prev,
                         [field.key]: e.target.value ? parseInt(e.target.value) : undefined
                       }))}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                        field.required && !columnMapping[field.key] ? 'border-red-300' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${field.required && !columnMapping[field.key] ? 'border-red-300' : 'border-gray-300'
+                        }`}
                     >
                       <option value="">Select column...</option>
                       {csvData.headers.map((header, index) => (
@@ -418,23 +410,6 @@ const CSVImportModal = ({ onClose, onImportComplete }) => {
                     </select>
                   </div>
                 ))}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Assign leads to employee *
-                </label>
-                <select
-                  value={selectedEmployee}
-                  onChange={(e) => setSelectedEmployee(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                >
-                  <option value="">Select employee...</option>
-                  {employees.map(employee => (
-                    <option key={employee.id} value={employee.id}>{employee.name}</option>
-                  ))}
-                </select>
               </div>
 
               {/* Preview */}
@@ -477,7 +452,7 @@ const CSVImportModal = ({ onClose, onImportComplete }) => {
                 </button>
                 <button
                   onClick={handleImport}
-                  disabled={importing || !columnMapping.name || !columnMapping.email || !columnMapping.phone || !selectedEmployee}
+                  disabled={importing || !columnMapping.name || !columnMapping.email || !columnMapping.phone}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-2 px-4 rounded-md transition-colors duration-200 font-medium flex items-center justify-center"
                 >
                   {importing ? (

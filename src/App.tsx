@@ -28,15 +28,15 @@ function AppContent() {
       <Routes>
         <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/dashboard" />} />
         <Route path="/signup" element={!user ? <SignUpPage /> : <Navigate to="/dashboard" />} />
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/dashboard"
           element={
             user ? (
               <DashboardRouter user={user} userProfile={userProfile} />
             ) : (
               <Navigate to="/login" />
             )
-          } 
+          }
         />
         <Route path="/dashboard/*" element={
           user ? (
@@ -55,9 +55,9 @@ function AppContent() {
 // Dashboard Router Component
 function DashboardRouter({ user, userProfile }: { user: any, userProfile: any }) {
   // Determine user type based on profile or email
-  const isAdmin = userProfile?.role === 'admin' || 
-                  user.email?.includes('admin') ||
-                  user.email === 'admin@pharvax.com';
+  const isAdmin = !userProfile || (userProfile?.role === 'admin' ||
+    user.email?.includes('admin') ||
+    user.email === 'admin@pharvax.com');
 
   const userData = {
     email: user.email,
