@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
-import { supabase, getCurrentUser, onAuthStateChange, isSupabaseConfigured } from '../lib/supabase'
+import { supabase, getCurrentUser, onAuthStateChange, isSupabaseConfigured, signInWithPassword, supabaseSignUp, supabaseSignOut } from '../lib/supabase'
 import { userCache } from '../lib/userCache'
 
 interface AuthContextType {
@@ -277,10 +277,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       setLoading(true)
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      const { data, error } = await signInWithPassword(email, password)
 
       if (error) {
         setLoading(false)
@@ -323,13 +320,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       console.log("Supabase signup")
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await supabaseSignUp(
         email,
         password,
-        options: {
-          data: metadata
-        }
-      })
+        metadata
+      )
 
       if (error) {
         console.log("Error in supabase signup: ")
@@ -396,7 +391,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isConfigured) {
       console.log('Supabase configured - calling supabase.auth.signOut() in background')
       try {
-        supabase.auth.signOut()
+        await supabaseSignOut()
         console.log('Supabase signOut successful')
         // Clear any remaining session data
         localStorage.removeItem('sb-' + supabase.supabaseUrl.split('//')[1].split('.')[0] + '-auth-token')
