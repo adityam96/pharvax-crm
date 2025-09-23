@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { Search, Filter, Edit, Trash2, ChevronDown, X, User, Mail, Phone, Calendar, UserCheck, TrendingUp, FileText } from 'lucide-react';
-import { getAllEmployees, supabase, logSupabaseCall } from '../lib/supabase';
+import { getAllEmployees, supabase, logSupabaseCall, getCallsMade } from '../lib/supabase';
 import { userCache } from '../lib/userCache';
 
 const AdminEmployees: React.FC = () => {
@@ -37,30 +37,6 @@ const AdminEmployees: React.FC = () => {
         return;
       }
 
-      // Get calls made count for each employee from chats table
-      const { data: chatCounts, error: chatError } = await logSupabaseCall('getEmployeeCallCounts', () => 
-        supabase
-          .from('chats')
-          .select('user_id')
-          .then(({ data, error }) => {
-            if (error) return { data: null, error };
-            
-            // Count calls per user
-            const callCounts = {};
-            if (data) {
-              data.forEach(chat => {
-                callCounts[chat.user_id] = (callCounts[chat.user_id] || 0) + 1;
-              });
-            }
-            
-            return { data: callCounts, error: null };
-          })
-      );
-
-      if (chatError) {
-        console.error('Error fetching chat counts:', chatError);
-      }
-
       // Transform data to match expected format
       const transformedData = profiles.map(profile => ({
         id: profile.id,
@@ -68,7 +44,6 @@ const AdminEmployees: React.FC = () => {
         email: profile.email_id,
         phone: profile.phone,
         role: profile.role === 'admin' ? 'Administrator' : profile.position || 'Sales Representative',
-        callsMade: chatCounts?.data?.[profile.user_id] || 0,
         joinDate: profile.created_at?.split('T')[0] || '',
         status: profile.is_active ? 'Active' : 'Inactive',
         department: profile.department,
@@ -234,7 +209,6 @@ const AdminEmployees: React.FC = () => {
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Role</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Location</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Status</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Calls Made</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Join Date</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Actions</th>
                 </tr>
@@ -261,11 +235,6 @@ const AdminEmployees: React.FC = () => {
                         : 'bg-red-100 text-red-800'
                         }`}>
                         {employee.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {employee.callsMade}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-gray-900">{employee.joinDate}</td>

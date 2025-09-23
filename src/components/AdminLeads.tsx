@@ -50,7 +50,6 @@ const AdminLeads: React.FC = () => {
         establishmentType: lead.establishment_type,
         assignedTo: lead.assigned_to_profile?.name || 'Unassigned',
         assignedToId: lead.assigned_to,
-        callsMade: lead.calls_made,
         status: lead.status,
         lastContact: lead.last_contact?.split('T')[0] || ''
       }));
@@ -333,11 +332,6 @@ const AdminLeads: React.FC = () => {
                   <span className="text-sm">Assigned to: {lead.assignedTo}</span>
                 </div>
               </div>
-
-              <div className="flex justify-between items-center pt-2 border-t border-gray-100">
-                <span className="text-xs text-gray-500">Calls: {lead.callsMade}</span>
-                <span className="text-xs text-gray-500">Last: {lead.lastContact}</span>
-              </div>
             </div>
           ))}
         </div>
@@ -431,14 +425,6 @@ const AdminLeads: React.FC = () => {
                   <div>
                     <p className="text-sm text-gray-600">Lead ID</p>
                     <p className="text-gray-900">#{selectedLead.id}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Calls Made</p>
-                    <p className="text-gray-900">{selectedLead.callsMade}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Last Contact</p>
-                    <p className="text-gray-900">{selectedLead.lastContact}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Status</p>
