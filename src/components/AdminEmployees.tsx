@@ -45,7 +45,6 @@ const AdminEmployees: React.FC = () => {
         phone: profile.phone,
         role: profile.role === 'admin' ? 'Administrator' : profile.position || 'Sales Representative',
         callsMade: 0, // TODO: Calculate from leads table
-        closedDeals: 0, // TODO: Calculate from leads table
         joinDate: profile.created_at?.split('T')[0] || '',
         status: profile.is_active ? 'Active' : 'Inactive',
         department: profile.department,
@@ -212,7 +211,6 @@ const AdminEmployees: React.FC = () => {
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Location</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Status</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Calls Made</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Closed Deals</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Join Date</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Actions</th>
                 </tr>
@@ -244,11 +242,6 @@ const AdminEmployees: React.FC = () => {
                     <td className="py-3 px-4">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {employee.callsMade}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                        {employee.closedDeals}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-gray-900">{employee.joinDate}</td>
@@ -473,15 +466,6 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
                       <p className="text-2xl font-bold text-blue-900">{employee.callsMade}</p>
                     </div>
                     <UserCheck className="w-8 h-8 text-blue-600" />
-                  </div>
-                </div>
-                <div className="bg-green-50 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-green-600 mb-1">Closed Deals</p>
-                      <p className="text-2xl font-bold text-green-900">{employee.closedDeals}</p>
-                    </div>
-                    <TrendingUp className="w-8 h-8 text-green-600" />
                   </div>
                 </div>
               </div>

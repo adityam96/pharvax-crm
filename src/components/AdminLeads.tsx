@@ -243,10 +243,6 @@ const AdminLeads: React.FC = () => {
               <Upload className="w-4 h-4" />
               <span>Import CSV</span>
             </button>
-            <button className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium flex items-center space-x-2">
-              <Download className="w-4 h-4" />
-              <span>Export CSV</span>
-            </button>
           </div>
         </div>
       </div>
