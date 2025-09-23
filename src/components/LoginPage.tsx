@@ -17,7 +17,7 @@ const LoginPage: React.FC = () => {
 
     try {
       const { error } = await signIn(email, password);
-      
+
       if (error) {
         if (error.message === 'Invalid login credentials') {
           setError('Invalid email or password');
@@ -41,9 +41,9 @@ const LoginPage: React.FC = () => {
         {/* Logo and Company Info */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <img 
-              src="/logo.png" 
-              alt="Pharvax Biosciences" 
+            <img
+              src="/logo.png"
+              alt="Pharvax Biosciences"
               className="h-16 w-auto"
             />
           </div>
@@ -138,15 +138,6 @@ const LoginPage: React.FC = () => {
                   <em>Note: These are demo credentials for testing purposes</em>
                 </div>
               </div>
-            </div>
-          )}
-          
-          {isConfigured && (
-            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
-              <h3 className="text-sm font-medium text-green-900 mb-2">✅ Ready to Sign In</h3>
-              <p className="text-xs text-green-700">
-                Supabase is configured. You can now sign in with your credentials.
-              </p>
             </div>
           )}
         </div>

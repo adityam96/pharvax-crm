@@ -94,14 +94,14 @@ const AdminLeads: React.FC = () => {
 
   const filteredLeads = allLeads.filter(lead => {
     const matchesSearch = lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         lead.company.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCalls = callsFilter === 'All' || 
-                        (callsFilter === '0' && lead.callsMade === 0) ||
-                        (callsFilter === '1-3' && lead.callsMade >= 1 && lead.callsMade <= 3) ||
-                        (callsFilter === '4+' && lead.callsMade >= 4);
-    
+      lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.company.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesCalls = callsFilter === 'All' ||
+      (callsFilter === '0' && lead.callsMade === 0) ||
+      (callsFilter === '1-3' && lead.callsMade >= 1 && lead.callsMade <= 3) ||
+      (callsFilter === '4+' && lead.callsMade >= 4);
+
     return matchesSearch && matchesCalls;
   });
 
@@ -229,14 +229,14 @@ const AdminLeads: React.FC = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">Leads Management</h1>
           <div className="flex items-center space-x-3">
-            <button 
+            <button
               onClick={() => setShowAddModal(true)}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium flex items-center space-x-2"
             >
               <Plus className="w-4 h-4" />
               <span>Add Lead</span>
             </button>
-            <button 
+            <button
               onClick={() => setShowImportModal(true)}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium flex items-center space-x-2"
             >
@@ -405,7 +405,7 @@ const AdminLeads: React.FC = () => {
                 <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
                   Contact Information
                 </h4>
-                
+
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
                     <Mail className="w-5 h-5 text-gray-400" />
@@ -414,7 +414,7 @@ const AdminLeads: React.FC = () => {
                       <p className="text-gray-900">{selectedLead.email}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-3">
                     <Phone className="w-5 h-5 text-gray-400" />
                     <div>
@@ -430,7 +430,7 @@ const AdminLeads: React.FC = () => {
                 <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
                   Lead Information
                 </h4>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Lead ID</p>
@@ -456,7 +456,7 @@ const AdminLeads: React.FC = () => {
                 <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
                   Recent Activity
                 </h4>
-                
+
                 <div className="space-y-3">
                   <div className="bg-gray-50 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-2">
@@ -470,7 +470,7 @@ const AdminLeads: React.FC = () => {
                       <strong>Next Action:</strong> Send product samples by Friday
                     </p>
                   </div>
-                  
+
                   <div className="bg-gray-50 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-2">
                       <h5 className="font-medium text-gray-900">Initial Contact</h5>
@@ -483,7 +483,7 @@ const AdminLeads: React.FC = () => {
                       <strong>Status:</strong> Interested in partnership discussion
                     </p>
                   </div>
-                  
+
                   <div className="bg-gray-50 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-2">
                       <h5 className="font-medium text-gray-900">Lead Created</h5>
@@ -498,7 +498,7 @@ const AdminLeads: React.FC = () => {
 
               {/* Action Buttons */}
               <div className="flex space-x-3 pt-4 border-t border-gray-200">
-                <button 
+                <button
                   onClick={() => handleEditLead(selectedLead)}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors duration-200 font-medium flex items-center justify-center space-x-2"
                 >
@@ -525,7 +525,7 @@ const AdminLeads: React.FC = () => {
 
       {/* Add Lead Modal */}
       {showAddModal && (
-        <AddLeadModal 
+        <AddLeadModal
           onSave={handleAddLead}
           onClose={() => setShowAddModal(false)}
           employees={employees}
@@ -534,7 +534,7 @@ const AdminLeads: React.FC = () => {
 
       {/* Edit Lead Modal */}
       {showEditModal && editingLead && (
-        <EditLeadModal 
+        <EditLeadModal
           lead={editingLead}
           onSave={handleUpdateLead}
           onClose={() => {
@@ -547,7 +547,7 @@ const AdminLeads: React.FC = () => {
 
       {/* CSV Import Modal */}
       {showImportModal && (
-        <CSVImportModal 
+        <CSVImportModal
           onClose={() => setShowImportModal(false)}
           onImportComplete={() => {
             setShowImportModal(false);
@@ -865,7 +865,6 @@ const CSVImportModal = ({ onClose, onImportComplete, employees }) => {
   const [importing, setImporting] = useState(false);
   const [importResults, setImportResults] = useState(null);
   const [step, setStep] = useState(1); // 1: Upload, 2: Map Columns, 3: Results
-  const [selectedEmployee, setSelectedEmployee] = useState('');
 
   const handleFileUpload = (event) => {
     const uploadedFile = event.target.files[0];
@@ -918,7 +917,7 @@ const CSVImportModal = ({ onClose, onImportComplete, employees }) => {
   };
 
   const handleImport = async () => {
-    if (!columnMapping.name || !columnMapping.email || !columnMapping.phone || !selectedEmployee) {
+    if (!columnMapping.name || !columnMapping.email || !columnMapping.phone) {
       alert('Please map required columns and select an employee');
       return;
     }
@@ -937,8 +936,7 @@ const CSVImportModal = ({ onClose, onImportComplete, employees }) => {
             phone: row[columnMapping.phone] || '',
             company: row[columnMapping.company] || '',
             establishment_type: row[columnMapping.establishment_type] || '',
-            status: 'Open',
-            assigned_to: selectedEmployee
+            status: 'Open'
           };
 
           // Validate required fields
@@ -1079,23 +1077,6 @@ const CSVImportModal = ({ onClose, onImportComplete, employees }) => {
                 ))}
               </div>
 
-              {/* Employee Assignment */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Assign all leads to *
-                </label>
-                <select
-                  value={selectedEmployee}
-                  onChange={(e) => setSelectedEmployee(e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!selectedEmployee ? 'border-red-300' : 'border-gray-300'}`}
-                >
-                  <option value="">Select employee...</option>
-                  {employees.map(employee => (
-                    <option key={employee.id} value={employee.id}>{employee.name}</option>
-                  ))}
-                </select>
-              </div>
-
               {/* Preview */}
               {csvData.data.length > 0 && (
                 <div>
@@ -1136,7 +1117,7 @@ const CSVImportModal = ({ onClose, onImportComplete, employees }) => {
                 </button>
                 <button
                   onClick={handleImport}
-                  disabled={importing || !columnMapping.name || !columnMapping.email || !columnMapping.phone || !selectedEmployee}
+                  disabled={importing || !columnMapping.name || !columnMapping.email || !columnMapping.phone}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-2 px-4 rounded-md transition-colors duration-200 font-medium flex items-center justify-center"
                 >
                   {importing ? (
