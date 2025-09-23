@@ -30,7 +30,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  
+
   // Update selected lead when prop changes
   React.useEffect(() => {
     if (selectedLeadForCall) {
@@ -48,27 +48,30 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
   const fetchLeads = async () => {
     try {
       setLoading(true);
-      
+
       // Try to get profile from cache first
       let currentUserProfile = userCache.getProfile();
-      
+      console.log('Current user profile from cache:', currentUserProfile);
       if (!currentUserProfile) {
         // Fetch from database if not in cache
+        console.log('Fetching user profile from database for user ID:', user.id);
         const { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
           .select('id')
-          .eq('user_id', user.id)
+          .eq('id', user.id)
           .single();
 
+        console.log('Fetched user profile:', profileData, 'error:', profileError);
         if (profileError) {
           console.error('Error fetching user profile:', profileError);
           return;
         }
-        
+
         currentUserProfile = profileData;
         userCache.setProfile(profileData);
       }
 
+      console.log('Using user profile:', currentUserProfile);
       // Fetch leads assigned to current user
       const { data, error } = await supabase
         .from('leads')
@@ -79,6 +82,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
         .eq('assigned_to', currentUserProfile.id)
         .order('created_at', { ascending: false });
 
+      console.log('Fetched leads:', data, 'error:', error);
       if (error) {
         console.error('Error fetching leads:', error);
         return;
@@ -128,7 +132,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
         // Create new lead and call
         await saveNewLeadCall(callData);
       }
-      
+
       // Refresh leads data
       await fetchLeads();
     } catch (error) {
@@ -136,7 +140,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
       alert('Error saving call data');
       return;
     }
-    
+
     onLeadCallLogged();
     alert('Call data saved successfully!');
   };
@@ -144,7 +148,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
   const saveExistingLeadCall = async (lead: Lead, callData: any) => {
     // Get current user from cache or context
     const currentUser = userCache.getUser() || user;
-    
+
     // Save chat record
     const { data: chatData, error: chatError } = await supabase
       .from('chats')
@@ -204,7 +208,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
     // Get current user and profile from cache or fetch
     const currentUser = userCache.getUser() || user;
     let currentUserProfile = userCache.getProfile();
-    
+
     if (!currentUserProfile) {
       const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
@@ -215,7 +219,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
       if (profileError) {
         throw new Error(`Error fetching user profile: ${profileError.message}`);
       }
-      
+
       currentUserProfile = profileData;
       userCache.setProfile(profileData);
     }
@@ -291,13 +295,13 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
 
   const handleMouseMove = (e: MouseEvent) => {
     if (!isDragging) return;
-    
+
     const container = document.getElementById('dashboard-container');
     if (!container) return;
-    
+
     const containerRect = container.getBoundingClientRect();
     const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-    
+
     // Set limits: minimum 30%, maximum 80%
     const clampedWidth = Math.min(Math.max(newWidth, 30), 80);
     setLeftPaneWidth(clampedWidth);
@@ -359,7 +363,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
       {/* Main Content */}
       <div id="dashboard-container" className="flex flex-1 h-[calc(100vh-80px)] relative">
         {/* Left Side - Leads List */}
-        <div 
+        <div
           className="p-6 overflow-y-auto bg-gray-50"
           style={{ width: `${leftPaneWidth}%` }}
         >
@@ -367,7 +371,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
             <h2 className="text-lg font-semibold text-gray-900">Recent Leads</h2>
             <p className="text-sm text-gray-600">Manage and track your sales leads</p>
           </div>
-          
+
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
@@ -392,7 +396,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
         </div>
 
         {/* Resizable Divider */}
-        <div 
+        <div
           className="w-1 bg-gray-300 hover:bg-green-500 cursor-col-resize flex items-center justify-center group transition-colors duration-200 relative"
           onMouseDown={handleMouseDown}
         >
@@ -402,7 +406,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
         </div>
 
         {/* Right Side - Call Log Form */}
-        <div 
+        <div
           className="p-6 overflow-y-auto bg-gray-50 border-l border-gray-200"
           style={{ width: `${100 - leftPaneWidth}%` }}
         >
