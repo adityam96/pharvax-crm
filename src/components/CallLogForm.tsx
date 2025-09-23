@@ -75,7 +75,7 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
   const fetchRecentActivity = async (leadId: string) => {
     try {
       setActivityLoading(true);
-      
+
       // Fetch chats and followups for the selected lead
       const [chatsResponse, followupsResponse] = await Promise.all([
         supabase
@@ -92,6 +92,9 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
           .limit(5)
       ]);
 
+      console.log('Fetched chats:', chatsResponse);
+      console.log('Fetched followups:', followupsResponse);
+
       const { data: chats, error: chatsError } = chatsResponse;
       const { data: followups, error: followupsError } = followupsResponse;
 
@@ -104,14 +107,14 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
 
       // Combine and sort activities
       const activities = [];
-      
+
       // Add chats as activities
       if (chats) {
         chats.forEach(chat => {
           activities.push({
             id: `chat-${chat.id}`,
             type: 'call',
-            title: getCallTitle(chat.call_status),
+            title: 'Status: ' + getCallTitle(chat.call_status),
             date: new Date(chat.created_at),
             notes: chat.mom,
             additionalInfo: chat.notes,
@@ -137,7 +140,7 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
 
       // Sort by date (newest first)
       activities.sort((a, b) => b.date.getTime() - a.date.getTime());
-      
+
       setRecentActivity(activities.slice(0, 3)); // Show only last 3 activities
     } catch (error) {
       console.error('Error fetching recent activity:', error);
@@ -170,7 +173,7 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
   const formatDate = (date: Date) => {
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) {
       return 'Just now';
     } else if (diffInHours < 24) {
@@ -218,7 +221,7 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
           </p>
         )}
       </div>
-      
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -416,43 +419,7 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
               <p className="text-gray-600">No recent activity found for this lead.</p>
             </div>
           )}
-          <div className="space-y-3">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="font-medium text-gray-900">Follow-up Call</h4>
-                <span className="text-xs text-gray-500">2 days ago</span>
-              </div>
-              <p className="text-sm text-gray-700 mb-2">
-                <strong>Follow-up Notes:</strong> Discussed pricing for bulk orders. Dr. Kumar showed interest in our new cardiac medication line. Requested product samples and detailed pricing sheet.
-              </p>
-              <p className="text-sm text-gray-600">
-                <strong>Next Action:</strong> Send product samples by Friday
-              </p>
-            </div>
-            
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="font-medium text-gray-900">Initial Contact</h4>
-                <span className="text-xs text-gray-500">1 week ago</span>
-              </div>
-              <p className="text-sm text-gray-700 mb-2">
-                <strong>Call Notes:</strong> First contact with {selectedLead.company}. Spoke with {selectedLead.name} about our pharmaceutical distribution services. Positive response to our product portfolio.
-              </p>
-              <p className="text-sm text-gray-600">
-                <strong>Status:</strong> Interested in partnership discussion
-              </p>
-            </div>
-            
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="font-medium text-gray-900">Lead Created</h4>
-                <span className="text-xs text-gray-500">2 weeks ago</span>
-              </div>
-              <p className="text-sm text-gray-700">
-                Lead generated from healthcare conference. {selectedLead.name} expressed interest in expanding their supplier network.
-              </p>
-            </div>
-          </div>
+
         </div>
       )}
     </div>

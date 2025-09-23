@@ -22,13 +22,13 @@ const AdminEmployees: React.FC = () => {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      
+
       // Check if we can use cached data for current user context
       const cachedProfile = userCache.getProfile();
       if (cachedProfile && cachedProfile.role === 'admin') {
         console.log('Admin user confirmed from cache');
       }
-      
+
       // First get user profiles
       const { data: profiles, error: profileError } = await supabase
         .from('user_profiles')
@@ -70,10 +70,10 @@ const AdminEmployees: React.FC = () => {
 
   const filteredEmployees = allEmployees.filter(employee => {
     const matchesSearch = employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         employee.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
+      employee.email.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesRole = roleFilter === 'All' || employee.role === roleFilter;
-    
+
     return matchesSearch && matchesRole;
   });
 
@@ -116,7 +116,7 @@ const AdminEmployees: React.FC = () => {
   const updateEmployee = async (updatedEmployee) => {
     try {
       console.log('Updating employee:', updatedEmployee, updatedEmployee.is_active);
-      
+
       const { error } = await supabase
         .from('user_profiles')
         .update({
@@ -237,11 +237,10 @@ const AdminEmployees: React.FC = () => {
                     </td>
                     <td className="py-3 px-4 text-gray-900">{employee.location}</td>
                     <td className="py-3 px-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        employee.is_active 
-                          ? 'bg-green-100 text-green-800' 
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${employee.is_active
+                          ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
-                      }`}>
+                        }`}>
                         {employee.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
@@ -294,7 +293,7 @@ const AdminEmployees: React.FC = () => {
 
       {/* Edit Employee Modal */}
       {showEditModal && editingEmployee && (
-        <EditEmployeeModal 
+        <EditEmployeeModal
           employee={editingEmployee}
           onSave={handleUpdateEmployee}
           onClose={() => {
@@ -323,35 +322,7 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
   };
 
   // Sample lead interactions for the employee
-  const leadInteractions = [
-    {
-      id: '1',
-      leadName: 'Dr. Rajesh Kumar',
-      company: 'Apollo Medical Clinic',
-      lastContact: '2024-03-15',
-      status: 'In Progress',
-      notes: 'Discussed pricing for bulk orders. Dr. Kumar showed interest in our new cardiac medication line. Requested product samples and detailed pricing sheet.',
-      callsMade: 3
-    },
-    {
-      id: '2',
-      leadName: 'Priya Sharma',
-      company: 'MedPlus Distributors',
-      lastContact: '2024-03-12',
-      status: 'Open',
-      notes: 'Initial contact made. Priya expressed interest in expanding their supplier network. Scheduled follow-up meeting for next week.',
-      callsMade: 1
-    },
-    {
-      id: '3',
-      leadName: 'Dr. Neha Gupta',
-      company: 'Max Healthcare',
-      lastContact: '2024-03-10',
-      status: 'Closed',
-      notes: 'Successfully closed the deal. Dr. Gupta agreed to our terms and signed the contract for quarterly supply of medications.',
-      callsMade: 5
-    }
-  ];
+  const leadInteractions = [];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -530,11 +501,10 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
                         <h4 className="font-medium text-gray-900">{interaction.leadName}</h4>
                         <p className="text-sm text-blue-600">{interaction.company}</p>
                       </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        interaction.status === 'Open' ? 'bg-green-100 text-green-800' :
-                        interaction.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${interaction.status === 'Open' ? 'bg-green-100 text-green-800' :
+                          interaction.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                        }`}>
                         {interaction.status}
                       </span>
                     </div>

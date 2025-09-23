@@ -35,10 +35,10 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
   const fetchLeads = async () => {
     try {
       setLoading(true);
-      
+
       // Try to get profile from cache first
       let currentUserProfile = userCache.getProfile();
-      
+
       if (!currentUserProfile) {
         // Fetch from database if not in cache
         const { data: profileData, error: profileError } = await supabase
@@ -51,7 +51,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
           console.error('Error fetching user profile:', profileError);
           return;
         }
-        
+
         currentUserProfile = profileData;
         userCache.setProfile(profileData);
       }
@@ -96,7 +96,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
   const fetchRecentActivity = async (leadId: string) => {
     try {
       setActivityLoading(true);
-      
+
       // Fetch chats and followups for the selected lead
       const [chatsResponse, followupsResponse] = await Promise.all([
         supabase
@@ -125,14 +125,14 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
 
       // Combine and sort activities
       const activities = [];
-      
+
       // Add chats as activities
       if (chats) {
         chats.forEach(chat => {
           activities.push({
             id: `chat-${chat.id}`,
             type: 'call',
-            title: getCallTitle(chat.call_status),
+            title: 'Status: ' + getCallTitle(chat.call_status),
             date: new Date(chat.created_at),
             notes: chat.mom,
             additionalInfo: chat.notes,
@@ -158,7 +158,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
 
       // Sort by date (newest first)
       activities.sort((a, b) => b.date.getTime() - a.date.getTime());
-      
+
       setRecentActivity(activities.slice(0, 5)); // Show only last 5 activities
     } catch (error) {
       console.error('Error fetching recent activity:', error);
@@ -191,7 +191,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
   const formatDate = (date: Date) => {
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) {
       return 'Just now';
     } else if (diffInHours < 24) {
@@ -218,11 +218,11 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
 
   const filteredLeads = allLeads.filter(lead => {
     const matchesSearch = lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (lead.company && lead.company.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+      lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (lead.company && lead.company.toLowerCase().includes(searchTerm.toLowerCase()));
+
     const matchesStatus = statusFilter === 'All' || lead.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -283,11 +283,10 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
-              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
-                statusFilter === status
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${statusFilter === status
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
             >
               {status} ({count})
             </button>
@@ -399,7 +398,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
                 <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
                   Contact Information
                 </h4>
-                
+
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
                     <Mail className="w-5 h-5 text-gray-400" />
@@ -408,7 +407,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
                       <p className="text-gray-900">{selectedLead.email}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-3">
                     <Phone className="w-5 h-5 text-gray-400" />
                     <div>
@@ -424,7 +423,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
                 <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
                   Lead Information
                 </h4>
-                
+
                 <div className="grid grid-cols-1 gap-4">
                   <div className="flex items-center space-x-3">
                     <User className="w-5 h-5 text-gray-400" />
@@ -433,7 +432,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
                       <p className="text-gray-900">#{selectedLead.id}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-3">
                     <Calendar className="w-5 h-5 text-gray-400" />
                     <div>
@@ -457,7 +456,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
                 <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
                   Recent Activity
                 </h4>
-                
+
                 {activityLoading ? (
                   <div className="flex items-center justify-center py-4">
                     <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin mr-2"></div>
@@ -503,48 +502,11 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
                     <p className="text-gray-600">No recent activity found for this lead.</p>
                   </div>
                 )}
-                <div className="space-y-3">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h5 className="font-medium text-gray-900">Follow-up Call</h5>
-                      <span className="text-xs text-gray-500">2 days ago</span>
-                    </div>
-                    <p className="text-sm text-gray-700 mb-2">
-                      <strong>Follow-up Notes:</strong> Discussed pricing for bulk orders. {selectedLead.name} showed interest in our new cardiac medication line. Requested product samples and detailed pricing sheet for {selectedLead.company}.
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      <strong>Next Action:</strong> Send product samples by Friday
-                    </p>
-                  </div>
-                  
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h5 className="font-medium text-gray-900">Initial Contact</h5>
-                      <span className="text-xs text-gray-500">1 week ago</span>
-                    </div>
-                    <p className="text-sm text-gray-700 mb-2">
-                      <strong>Call Notes:</strong> First contact with {selectedLead.company}. Spoke with {selectedLead.name} about our pharmaceutical distribution services. Positive response to our product portfolio.
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      <strong>Status:</strong> Interested in partnership discussion
-                    </p>
-                  </div>
-                  
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h5 className="font-medium text-gray-900">Lead Created</h5>
-                      <span className="text-xs text-gray-500">2 weeks ago</span>
-                    </div>
-                    <p className="text-sm text-gray-700">
-                      Lead generated from healthcare conference. {selectedLead.name} expressed interest in expanding their supplier network for {selectedLead.company}.
-                    </p>
-                  </div>
-                </div>
               </div>
 
               {/* Action Buttons */}
               <div className="flex space-x-3 pt-4 border-t border-gray-200">
-                <button 
+                <button
                   onClick={() => {
                     onLogCall(selectedLead);
                     closeModal();

@@ -32,11 +32,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     console.log("In useeffect")
-    
+
     // Check cache first
     const cachedUser = userCache.getUser();
     const cachedProfile = userCache.getProfile();
-    
+
     if (cachedUser && cachedProfile && userCache.isValid()) {
       console.log('Using cached user data');
       setUser(cachedUser);
@@ -44,7 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
       return;
     }
-    
+
     // If Supabase is not configured, just stop loading
     if (!isConfigured) {
       console.log('Supabase not configured, stopping loading')
@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return
     }
 
-  
+
     getCurrentUser().then(({ user, error }) => {
       console.log('Initial user fetch result:', { user: user?.email, error })
       if (!error && user) {
@@ -77,23 +77,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false)
     })
 
-    
+
     // Listen for auth changes only if configured
     const { data: { subscription } } = onAuthStateChange(async (event, session) => {
       console.log('Auth state change:', event, session?.user?.email || 'no user', session?.user)
       setUser(session?.user ?? null)
-      
+
       if (session?.user) {
         userCache.setUser(session.user)
       } else {
         userCache.clear()
       }
-      
+
       if (session?.user) {
         try {
           console.log('Auth state change - fetching profile for:', session.user.id)
           await fetchUserProfileWithRetry(session.user.id, "auth state change")
-          
+
           // Check if user is active after profile fetch
           const profile = userProfile
           if (profile && profile.is_active === false) {
@@ -101,7 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await forceSignOut()
             return
           }
-          
+
           console.log('Auth state change - profile fetch completed successfully')
           setLoading(false)
         } catch (error) {
@@ -120,7 +120,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       subscription.unsubscribe()
     }
-    return () => {}
+    return () => { }
   }, [isConfigured])
 
   function withTimeout<T>(p: Promise<T>, ms: number, label = 'Timeout'): Promise<T> {
@@ -138,26 +138,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
-    
+
   const fetchUserProfileWithRetry = async (userId: string, caller: string) => {
     console.log(`fetchUserProfileWithRetry called for userId: ${userId} from: ${caller}`)
-    
+
     const startTime = Date.now()
     const maxDuration = 10000 // 10 seconds
     let attempts = 0
     const maxAttempts = 5
-    
+
     while (attempts < maxAttempts) {
       const elapsedTime = Date.now() - startTime
-      
+
       if (elapsedTime >= maxDuration) {
         console.log(`Profile fetch timeout after ${elapsedTime}ms, giving up`)
         throw new Error(`Profile fetch timeout after 10 seconds`)
       }
-      
+
       attempts++
       console.log(`Profile fetch attempt ${attempts}/${maxAttempts} (elapsed: ${elapsedTime}ms)`)
-      
+
       try {
         await fetchUserProfile(userId, `${caller} - attempt ${attempts}`)
         console.log(`Profile fetch successful on attempt ${attempts}`)
@@ -170,7 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           console.warn(`Profile fetch attempt ${attempts} failed (will retry):`, error)
         }
-        
+
         // Wait before next attempt (but don't exceed total time limit)
         const waitTime = Math.min(2000, maxDuration - (Date.now() - startTime))
         if (waitTime > 0) {
@@ -179,14 +179,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
     }
-    
+
     throw new Error(`Profile fetch failed after ${maxAttempts} attempts`)
   }
 
   const fetchUserProfile = async (userId: string, caller: string) => {
+
+    const cachedProfile = userCache.getProfile()
+    if (cachedProfile) {
+      console.log('Using cached profile data in fetchUserProfile')
+      setUserProfile(cachedProfile)
+      return
+    }
+
     console.log('fetchUserProfile called with userId:', userId, ' from: ', caller)
     if (!isConfigured) return
-    
+
     try {
       console.log('About to query user_profiles table...')
       console.log('Querying with userId:', userId)
@@ -209,7 +217,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('Error code:', error?.code)
         console.log('Error message:', error?.message)
       }
-      
+
       if (error && error.code !== 'PGRST116') {
         console.error('Error fetching user profile:', error)
         throw error
@@ -226,14 +234,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       userCache.setProfile(data)
     } catch (error) {
       console.error('Error fetching user profile:', error)
-      
+
       // If this is a timeout after 10 seconds, clear the session
       if (error.message?.includes('timeout after 10 seconds')) {
         console.log('Profile fetch failed after 10 seconds, clearing session and redirecting to login')
         await forceSignOut()
         return
       }
-      
+
       setUserProfile(null)
       throw error
     }
@@ -250,12 +258,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             name: email === 'admin@pharvax.com' ? 'Admin User' : 'Employee User'
           }
         }
-        
+
         const mockProfile = {
           name: email === 'admin@pharvax.com' ? 'Admin User' : 'Employee User',
           role: email === 'admin@pharvax.com' ? 'admin' : 'employee'
         }
-        
+
         setUser(mockUser as User)
         setUserProfile(mockProfile)
         userCache.setUser(mockUser)
@@ -284,7 +292,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userCache.setUser(data.user)
         try {
           await fetchUserProfile(data.user.id, "sign in")
-          
+
           // Check if user is active after fetching profile
           if (userProfile && userProfile.is_active === false) {
             await signOut()
@@ -296,7 +304,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { error: null } // Return success since auth worked
         }
       }
-      
+
       setLoading(false)
       return { error: null }
     } catch (error) {
@@ -368,7 +376,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     console.log('SignOut called - starting logout process')
-    
+
     try {
       // Clear local state immediately
       console.log('Clearing user state')
@@ -376,14 +384,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUserProfile(null)
       userCache.clear()
       console.log('User state cleared - should redirect to login')
-      
+
       // Force a re-render by setting loading briefly
       setLoading(true)
       setTimeout(() => setLoading(false), 100)
     } catch (error) {
       console.error('Error clearing user state:', error)
     }
-    
+
     // Sign out from Supabase properly to clear session
     if (isConfigured) {
       console.log('Supabase configured - calling supabase.auth.signOut() in background')
@@ -416,16 +424,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUserProfile(null)
       userCache.clear()
       setLoading(false)
-      
+
       // Clear all possible storage locations
       localStorage.clear()
       sessionStorage.clear()
-      
+
       // Try Supabase signOut if configured
       if (isConfigured) {
         await supabase.auth.signOut()
       }
-      
+
       // Small delay to ensure state is cleared, then redirect
       setTimeout(() => {
         window.location.href = '/login'

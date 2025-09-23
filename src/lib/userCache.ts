@@ -27,7 +27,7 @@ export const userCache = {
 
       const cacheData = JSON.parse(cached);
       const now = Date.now();
-      
+
       // Check if cache is expired
       if (now - cacheData.timestamp > CACHE_DURATION) {
         sessionStorage.removeItem(USER_CACHE_KEY);
@@ -59,7 +59,7 @@ export const userCache = {
 
       const cacheData = JSON.parse(cached);
       const now = Date.now();
-      
+
       // Check if cache is expired
       if (now - cacheData.timestamp > CACHE_DURATION) {
         sessionStorage.removeItem(PROFILE_CACHE_KEY);
@@ -85,15 +85,15 @@ export const userCache = {
     try {
       const userCached = sessionStorage.getItem(USER_CACHE_KEY);
       const profileCached = sessionStorage.getItem(PROFILE_CACHE_KEY);
-      
+
       if (!userCached || !profileCached) return false;
 
       const userCacheData = JSON.parse(userCached);
       const profileCacheData = JSON.parse(profileCached);
       const now = Date.now();
-      
-      return (now - userCacheData.timestamp <= CACHE_DURATION) && 
-             (now - profileCacheData.timestamp <= CACHE_DURATION);
+
+      return (now - userCacheData.timestamp <= CACHE_DURATION) &&
+        (now - profileCacheData.timestamp <= CACHE_DURATION);
     } catch (error) {
       return false;
     }

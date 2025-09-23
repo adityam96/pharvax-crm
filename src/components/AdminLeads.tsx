@@ -26,13 +26,13 @@ const AdminLeads: React.FC = () => {
   const fetchLeads = async () => {
     try {
       setLoading(true);
-      
+
       // Check if we can use cached data for current user context
       const cachedProfile = userCache.getProfile();
       if (cachedProfile && cachedProfile.role === 'admin') {
         console.log('Admin user confirmed from cache');
       }
-      
+
       const { data, error } = await supabase
         .from('leads')
         .select(`
@@ -546,7 +546,7 @@ const RecentActivitySection = ({ leadId }) => {
   const fetchRecentActivity = async (leadId: string) => {
     try {
       setActivityLoading(true);
-      
+
       // Fetch chats and followups for the selected lead
       const [chatsResponse, followupsResponse] = await Promise.all([
         supabase
@@ -563,6 +563,8 @@ const RecentActivitySection = ({ leadId }) => {
           .limit(10)
       ]);
 
+      console.log('Fetched chats:', chatsResponse, 'followups:', followupsResponse);
+
       const { data: chats, error: chatsError } = chatsResponse;
       const { data: followups, error: followupsError } = followupsResponse;
 
@@ -575,14 +577,14 @@ const RecentActivitySection = ({ leadId }) => {
 
       // Combine and sort activities
       const activities = [];
-      
+
       // Add chats as activities
       if (chats) {
         chats.forEach(chat => {
           activities.push({
             id: `chat-${chat.id}`,
             type: 'call',
-            title: getCallTitle(chat.call_status),
+            title: 'Status: ' + getCallTitle(chat.call_status),
             date: new Date(chat.created_at),
             notes: chat.mom,
             additionalInfo: chat.notes,
@@ -608,7 +610,7 @@ const RecentActivitySection = ({ leadId }) => {
 
       // Sort by date (newest first)
       activities.sort((a, b) => b.date.getTime() - a.date.getTime());
-      
+
       setRecentActivity(activities.slice(0, 5)); // Show only last 5 activities
     } catch (error) {
       console.error('Error fetching recent activity:', error);
@@ -641,7 +643,7 @@ const RecentActivitySection = ({ leadId }) => {
   const formatDate = (date: Date) => {
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) {
       return 'Just now';
     } else if (diffInHours < 24) {
