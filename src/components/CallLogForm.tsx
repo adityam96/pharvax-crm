@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { Calendar, Save } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 interface CallLogData {
   contactName: string;
@@ -26,6 +29,9 @@ interface CallLogFormProps {
 }
 
 const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const { user } = useAuth();
   const [formData, setFormData] = useState<CallLogData>({
     contactName: selectedLead?.name || '',
     phone: selectedLead?.phone || '',
@@ -49,6 +55,7 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
         company: selectedLead.company || '',
         establishmentType: selectedLead.establishmentType || '',
       }));
+      fetchRecentActivity(selectedLead.id);
     } else {
       setFormData({
         contactName: '',
@@ -61,9 +68,120 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
         notes: '',
         callStatus: '',
       });
+      setRecentActivity([]);
     }
   }, [selectedLead]);
 
+  const fetchRecentActivity = async (leadId: string) => {
+    try {
+      setActivityLoading(true);
+      
+      // Fetch chats and followups for the selected lead
+      const [chatsResponse, followupsResponse] = await Promise.all([
+        supabase
+          .from('chats')
+          .select('*')
+          .eq('lead_id', leadId)
+          .order('created_at', { ascending: false })
+          .limit(5),
+        supabase
+          .from('followups')
+          .select('*')
+          .eq('lead_id', leadId)
+          .order('created_at', { ascending: false })
+          .limit(5)
+      ]);
+
+      const { data: chats, error: chatsError } = chatsResponse;
+      const { data: followups, error: followupsError } = followupsResponse;
+
+      if (chatsError) {
+        console.error('Error fetching chats:', chatsError);
+      }
+      if (followupsError) {
+        console.error('Error fetching followups:', followupsError);
+      }
+
+      // Combine and sort activities
+      const activities = [];
+      
+      // Add chats as activities
+      if (chats) {
+        chats.forEach(chat => {
+          activities.push({
+            id: `chat-${chat.id}`,
+            type: 'call',
+            title: getCallTitle(chat.call_status),
+            date: new Date(chat.created_at),
+            notes: chat.mom,
+            additionalInfo: chat.notes,
+            status: chat.call_status
+          });
+        });
+      }
+
+      // Add followups as activities
+      if (followups) {
+        followups.forEach(followup => {
+          activities.push({
+            id: `followup-${followup.id}`,
+            type: 'followup',
+            title: 'Follow-up Scheduled',
+            date: new Date(followup.created_at),
+            notes: followup.notes,
+            followupDate: followup.follow_up_date,
+            status: followup.status
+          });
+        });
+      }
+
+      // Sort by date (newest first)
+      activities.sort((a, b) => b.date.getTime() - a.date.getTime());
+      
+      setRecentActivity(activities.slice(0, 3)); // Show only last 3 activities
+    } catch (error) {
+      console.error('Error fetching recent activity:', error);
+    } finally {
+      setActivityLoading(false);
+    }
+  };
+
+  const getCallTitle = (callStatus: string) => {
+    switch (callStatus) {
+      case 'follow-up-scheduled':
+        return 'Follow-up Call';
+      case 'no-answer':
+        return 'No Answer';
+      case 'denied':
+        return 'Call Denied';
+      case 'converted':
+        return 'Successful Conversion';
+      case 'interested':
+        return 'Interested Contact';
+      case 'not-interested':
+        return 'Not Interested';
+      case 'callback-requested':
+        return 'Callback Requested';
+      default:
+        return 'Call Made';
+    }
+  };
+
+  const formatDate = (date: Date) => {
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) {
+      return 'Just now';
+    } else if (diffInHours < 24) {
+      return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    } else if (diffInHours < 48) {
+      return 'Yesterday';
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24);
+      return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+    }
+  };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
@@ -253,6 +371,51 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
       {selectedLead && (
         <div className="mt-8 pt-6 border-t border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+          {activityLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+              <span className="text-gray-600">Loading activity...</span>
+            </div>
+          ) : recentActivity.length > 0 ? (
+            <div className="space-y-3">
+              {recentActivity.map((activity) => (
+                <div key={activity.id} className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-medium text-gray-900">{activity.title}</h4>
+                    <span className="text-xs text-gray-500">{formatDate(activity.date)}</span>
+                  </div>
+                  {activity.type === 'call' && (
+                    <>
+                      <p className="text-sm text-gray-700 mb-2">
+                        <strong>Call Notes:</strong> {activity.notes}
+                      </p>
+                      {activity.additionalInfo && (
+                        <p className="text-sm text-gray-600">
+                          <strong>Additional Notes:</strong> {activity.additionalInfo}
+                        </p>
+                      )}
+                    </>
+                  )}
+                  {activity.type === 'followup' && (
+                    <>
+                      <p className="text-sm text-gray-700 mb-2">
+                        <strong>Follow-up Date:</strong> {new Date(activity.followupDate).toLocaleDateString()}
+                      </p>
+                      {activity.notes && (
+                        <p className="text-sm text-gray-600">
+                          <strong>Notes:</strong> {activity.notes}
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-gray-600">No recent activity found for this lead.</p>
+            </div>
+          )}
           <div className="space-y-3">
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex justify-between items-start mb-2">
