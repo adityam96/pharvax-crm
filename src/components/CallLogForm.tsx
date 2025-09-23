@@ -4,6 +4,9 @@ import { Calendar, Save } from 'lucide-react';
 interface CallLogData {
   contactName: string;
   phone: string;
+  email?: string;
+  company?: string;
+  establishmentType?: string;
   mom: string;
   followUpDate: string;
   notes: string;
@@ -17,6 +20,8 @@ interface CallLogFormProps {
     name: string;
     phone: string;
     company?: string;
+    email?: string;
+    establishmentType?: string;
   } | null;
 }
 
@@ -24,6 +29,9 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
   const [formData, setFormData] = useState<CallLogData>({
     contactName: selectedLead?.name || '',
     phone: selectedLead?.phone || '',
+    email: selectedLead?.email || '',
+    company: selectedLead?.company || '',
+    establishmentType: selectedLead?.establishmentType || '',
     mom: '',
     followUpDate: '',
     notes: '',
@@ -37,11 +45,17 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
         ...prev,
         contactName: selectedLead.name,
         phone: selectedLead.phone,
+        email: selectedLead.email || '',
+        company: selectedLead.company || '',
+        establishmentType: selectedLead.establishmentType || '',
       }));
     } else {
       setFormData({
         contactName: '',
         phone: '',
+        email: '',
+        company: '',
+        establishmentType: '',
         mom: '',
         followUpDate: '',
         notes: '',
@@ -57,6 +71,9 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
     setFormData({
       contactName: '',
       phone: '',
+      email: '',
+      company: '',
+      establishmentType: '',
       mom: '',
       followUpDate: '',
       notes: '',
@@ -75,6 +92,11 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
         {selectedLead && (
           <p className="text-sm text-blue-600 mt-1">
             Logging call for: {selectedLead.company || selectedLead.name}
+          </p>
+        )}
+        {!selectedLead && (
+          <p className="text-sm text-green-600 mt-1">
+            Creating new lead and logging call
           </p>
         )}
       </div>
@@ -108,6 +130,53 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
           />
         </div>
 
+        {!selectedLead && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email
+              </label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleChange('email', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Enter email address"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Company
+              </label>
+              <input
+                type="text"
+                value={formData.company}
+                onChange={(e) => handleChange('company', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Enter company name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Establishment Type
+              </label>
+              <select
+                value={formData.establishmentType}
+                onChange={(e) => handleChange('establishmentType', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                <option value="">Select establishment type</option>
+                <option value="Clinic">Clinic</option>
+                <option value="Hospital">Hospital</option>
+                <option value="Distributor">Distributor</option>
+                <option value="Pharmacy">Pharmacy</option>
+              </select>
+            </div>
+          </>
+        )}
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Minutes of Meeting (MoM)
@@ -132,7 +201,6 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
               value={formData.followUpDate}
               onChange={(e) => handleChange('followUpDate', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent pr-10"
-              required
             />
             <Calendar className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
           </div>

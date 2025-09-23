@@ -14,24 +14,39 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
   const [selectedLead, setSelectedLead] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [allLeads, setAllLeads] = React.useState([]);
-  const { userProfile } = useAuth();
+  const { userProfile, user } = useAuth();
 
   // Fetch leads from database
   useEffect(() => {
-    if (userProfile) {
+    if (user) {
       fetchLeads();
     }
-  }, [userProfile]);
+  }, [user]);
 
   const fetchLeads = async () => {
     try {
       setLoading(true);
+      
+      // Get current user's profile to get their ID
+      const { data: currentUserProfile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+        return;
+      }
+
+      // Fetch leads assigned to current user
       const { data, error } = await supabase
         .from('leads')
         .select(`
           *,
           assigned_to_profile:user_profiles!assigned_to(name)
         `)
+        .eq('assigned_to', currentUserProfile.id)
         .order('created_at', { ascending: false });
 
       if (error) {

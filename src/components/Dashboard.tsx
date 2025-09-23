@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { Search, Plus, GripVertical } from 'lucide-react';
 import LeadCard from './LeadCard';
 import CallLogForm from './CallLogForm';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Lead {
   id: string;
@@ -10,6 +13,7 @@ interface Lead {
   phone: string;
   status: 'Open' | 'In Progress' | 'Closed';
   company?: string;
+  establishmentType?: string;
 }
 
 interface DashboardProps {
@@ -22,6 +26,9 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
   const [selectedLead, setSelectedLead] = useState<Lead | null>(selectedLeadForCall || null);
   const [leftPaneWidth, setLeftPaneWidth] = useState(60); // percentage
   const [isDragging, setIsDragging] = useState(false);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
   
   // Update selected lead when prop changes
   React.useEffect(() => {
@@ -30,45 +37,64 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
     }
   }, [selectedLeadForCall]);
 
-  // Sample leads data
-  const [leads] = useState<Lead[]>([
-    {
-      id: '1',
-      name: 'Dr. Rajesh Kumar',
-      email: 'rajesh@apolloclinic.com',
-      phone: '+91 98765 43210',
-      status: 'Open',
-      company: 'Apollo Medical Clinic',
-      establishmentType: 'Clinic'
-    },
-    {
-      id: '2',
-      name: 'Priya Sharma',
-      email: 'priya@medplusdist.in',
-      phone: '+91 87654 32109',
-      status: 'In Progress',
-      company: 'MedPlus Distributors',
-      establishmentType: 'Distributor'
-    },
-    {
-      id: '3',
-      name: 'Dr. Amit Patel',
-      email: 'amit@fortishospital.com',
-      phone: '+91 76543 21098',
-      status: 'In Progress',
-      company: 'Fortis Hospital',
-      establishmentType: 'Hospital'
-    },
-    {
-      id: '4',
-      name: 'Sunita Reddy',
-      email: 'sunita@reliancepharm.co.in',
-      phone: '+91 65432 10987',
-      status: 'Closed',
-      company: 'Reliance Pharmacy Chain',
-      establishmentType: 'Pharmacy'
+  // Fetch leads from database
+  useEffect(() => {
+    if (user) {
+      fetchLeads();
     }
-  ]);
+  }, [user]);
+
+  const fetchLeads = async () => {
+    try {
+      setLoading(true);
+      
+      // Get current user's profile to get their ID
+      const { data: currentUserProfile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+        return;
+      }
+
+      // Fetch leads assigned to current user
+      const { data, error } = await supabase
+        .from('leads')
+        .select(`
+          *,
+          assigned_to_profile:user_profiles!assigned_to(name)
+        `)
+        .eq('assigned_to', currentUserProfile.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching leads:', error);
+        return;
+      }
+
+      // Transform data to match expected format
+      const transformedData = data.map(lead => ({
+        id: lead.id,
+        name: lead.name,
+        email: lead.email,
+        phone: lead.phone,
+        status: lead.status,
+        company: lead.company,
+        establishmentType: lead.establishment_type,
+        callsMade: lead.calls_made,
+        lastContact: lead.last_contact
+      }));
+
+      setLeads(transformedData);
+    } catch (error) {
+      console.error('Error fetching leads:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredLeads = leads.filter(lead =>
     lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -84,13 +110,160 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
     setSelectedLead(null);
   };
 
-  const handleSaveCall = (callData: any) => {
-    console.log('Saving call data:', callData);
-    // Implementation for saving call data
+  const handleSaveCall = async (callData: any) => {
+    try {
+      if (selectedLead) {
+        // Update existing lead call
+        await saveExistingLeadCall(selectedLead, callData);
+      } else {
+        // Create new lead and call
+        await saveNewLeadCall(callData);
+      }
+      
+      // Refresh leads data
+      await fetchLeads();
+    } catch (error) {
+      console.error('Error saving call:', error);
+      alert('Error saving call data');
+      return;
+    }
+    
     onLeadCallLogged();
     alert('Call data saved successfully!');
   };
 
+  const saveExistingLeadCall = async (lead: Lead, callData: any) => {
+    // Save chat record
+    const { data: chatData, error: chatError } = await supabase
+      .from('chats')
+      .insert([
+        {
+          lead_id: lead.id,
+          user_id: user.id,
+          contact_name: callData.contactName,
+          phone: callData.phone,
+          mom: callData.mom,
+          notes: callData.notes,
+          call_status: callData.callStatus
+        }
+      ])
+      .select()
+      .single();
+
+    if (chatError) {
+      throw new Error(`Error saving chat: ${chatError.message}`);
+    }
+
+    // Update lead's calls_made count and last_contact
+    const { error: leadError } = await supabase
+      .from('leads')
+      .update({
+        calls_made: (lead.callsMade || 0) + 1,
+        last_contact: new Date().toISOString()
+      })
+      .eq('id', lead.id);
+
+    if (leadError) {
+      throw new Error(`Error updating lead: ${leadError.message}`);
+    }
+
+    // Save follow-up if provided
+    if (callData.followUpDate) {
+      const { error: followupError } = await supabase
+        .from('followups')
+        .insert([
+          {
+            chat_id: chatData.id,
+            lead_id: lead.id,
+            user_id: user.id,
+            follow_up_date: callData.followUpDate,
+            notes: callData.notes,
+            status: 'pending'
+          }
+        ]);
+
+      if (followupError) {
+        throw new Error(`Error saving follow-up: ${followupError.message}`);
+      }
+    }
+  };
+
+  const saveNewLeadCall = async (callData: any) => {
+    // Get current user's profile ID
+    const { data: currentUserProfile, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (profileError) {
+      throw new Error(`Error fetching user profile: ${profileError.message}`);
+    }
+
+    // Create new lead
+    const { data: leadData, error: leadError } = await supabase
+      .from('leads')
+      .insert([
+        {
+          name: callData.contactName,
+          email: callData.email || '',
+          phone: callData.phone,
+          company: callData.company || '',
+          establishment_type: callData.establishmentType || '',
+          status: 'Open',
+          assigned_to: currentUserProfile.id,
+          calls_made: 1,
+          last_contact: new Date().toISOString()
+        }
+      ])
+      .select()
+      .single();
+
+    if (leadError) {
+      throw new Error(`Error creating lead: ${leadError.message}`);
+    }
+
+    // Save chat record
+    const { data: chatData, error: chatError } = await supabase
+      .from('chats')
+      .insert([
+        {
+          lead_id: leadData.id,
+          user_id: user.id,
+          contact_name: callData.contactName,
+          phone: callData.phone,
+          mom: callData.mom,
+          notes: callData.notes,
+          call_status: callData.callStatus
+        }
+      ])
+      .select()
+      .single();
+
+    if (chatError) {
+      throw new Error(`Error saving chat: ${chatError.message}`);
+    }
+
+    // Save follow-up if provided
+    if (callData.followUpDate) {
+      const { error: followupError } = await supabase
+        .from('followups')
+        .insert([
+          {
+            chat_id: chatData.id,
+            lead_id: leadData.id,
+            user_id: user.id,
+            follow_up_date: callData.followUpDate,
+            notes: callData.notes,
+            status: 'pending'
+          }
+        ]);
+
+      if (followupError) {
+        throw new Error(`Error saving follow-up: ${followupError.message}`);
+      }
+    }
+  };
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
     e.preventDefault();
@@ -175,15 +348,27 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
             <p className="text-sm text-gray-600">Manage and track your sales leads</p>
           </div>
           
-          <div className="space-y-4">
-            {filteredLeads.map((lead) => (
-              <LeadCard
-                key={lead.id}
-                lead={lead}
-                onLogCall={handleLogCall}
-              />
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+              <span className="ml-2 text-gray-600">Loading leads...</span>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredLeads.map((lead) => (
+                <LeadCard
+                  key={lead.id}
+                  lead={lead}
+                  onLogCall={handleLogCall}
+                />
+              ))}
+              {filteredLeads.length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-gray-600">No leads assigned to you yet.</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Resizable Divider */}
