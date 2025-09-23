@@ -257,7 +257,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const mockProfile = {
           name: email === 'admin@pharvax.com' ? 'Admin User' : 'Employee User',
-          role: email === 'admin@pharvax.com' ? 'admin' : 'employee'
+          role: email === 'admin@pharvax.com' ? 'admin' : 'employee',
+          is_active: true
         }
 
         setUser(mockUser as User)
@@ -288,7 +289,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           // Check if user is active after fetching profile
           if (userProfile && userProfile.is_active === false) {
-            await supabaseSignOut()
+            await signOut()
             return { error: { message: 'Your account has been deactivated. Please contact your administrator.' } }
           }
         } catch (profileError) {
