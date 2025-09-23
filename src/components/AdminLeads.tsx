@@ -6,7 +6,9 @@ import { userCache } from '../lib/userCache';
 
 const AdminLeads: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [callsFilter, setCallsFilter] = useState('All');
+  const [assignedToFilter, setAssignedToFilter] = useState('All');
+  const [establishmentTypeFilter, setEstablishmentTypeFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
   const [dateRange, setDateRange] = useState('01/01/2024 - 03/31/2024');
   const [selectedLead, setSelectedLead] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -16,6 +18,11 @@ const AdminLeads: React.FC = () => {
   const [allLeads, setAllLeads] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [filterOptions, setFilterOptions] = useState({
+    assignedTo: ['All'],
+    establishmentTypes: ['All'],
+    statuses: ['All']
+  });
 
   // Fetch data from database
   useEffect(() => {
@@ -55,6 +62,17 @@ const AdminLeads: React.FC = () => {
       }));
 
       setAllLeads(transformedData);
+
+      // Generate filter options from the retrieved leads
+      const assignedToOptions = ['All', ...new Set(transformedData.map(lead => lead.assignedTo).filter(Boolean))];
+      const establishmentTypeOptions = ['All', ...new Set(transformedData.map(lead => lead.establishmentType).filter(Boolean))];
+      const statusOptions = ['All', ...new Set(transformedData.map(lead => lead.status).filter(Boolean))];
+
+      setFilterOptions({
+        assignedTo: assignedToOptions,
+        establishmentTypes: establishmentTypeOptions,
+        statuses: statusOptions
+      });
     } catch (error) {
       console.error('Error fetching leads:', error);
     } finally {
@@ -96,12 +114,11 @@ const AdminLeads: React.FC = () => {
       lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.company.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesCalls = callsFilter === 'All' ||
-      (callsFilter === '0' && lead.callsMade === 0) ||
-      (callsFilter === '1-3' && lead.callsMade >= 1 && lead.callsMade <= 3) ||
-      (callsFilter === '4+' && lead.callsMade >= 4);
+    const matchesAssignedTo = assignedToFilter === 'All' || lead.assignedTo === assignedToFilter;
+    const matchesEstablishmentType = establishmentTypeFilter === 'All' || lead.establishmentType === establishmentTypeFilter;
+    const matchesStatus = statusFilter === 'All' || lead.status === statusFilter;
 
-    return matchesSearch && matchesCalls;
+    return matchesSearch && matchesAssignedTo && matchesEstablishmentType && matchesStatus;
   });
 
   const handleCardClick = (lead) => {
@@ -248,7 +265,8 @@ const AdminLeads: React.FC = () => {
 
       {/* Filters */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="space-y-4">
+          {/* Search Row */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
@@ -260,7 +278,77 @@ const AdminLeads: React.FC = () => {
             />
           </div>
 
-          <div className="relative">
+          {/* Filter Dropdowns Row */}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="relative">
+              <select
+                value={assignedToFilter}
+                onChange={(e) => setAssignedToFilter(e.target.value)}
+                className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {filterOptions.assignedTo.map((option) => (
+                  <option key={option} value={option}>
+                    {option === 'All' ? 'All Assigned To' : option}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+            </div>
+
+            <div className="relative">
+              <select
+                value={establishmentTypeFilter}
+                onChange={(e) => setEstablishmentTypeFilter(e.target.value)}
+                className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {filterOptions.establishmentTypes.map((option) => (
+                  <option key={option} value={option}>
+                    {option === 'All' ? 'All Types' : option}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+            </div>
+
+            <div className="relative">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {filterOptions.statuses.map((option) => (
+                  <option key={option} value={option}>
+                    {option === 'All' ? 'All Statuses' : option}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+            </div>
+
+            <div className="relative">
+              <input
+                type="text"
+                value={dateRange}
+                onChange={(e) => setDateRange(e.target.value)}
+                className="border border-gray-300 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Select date range"
+              />
+              <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-6">
+        <div className="mb-4">
+          <p className="text-sm text-gray-600">
+            Showing {filteredLeads.length} of {allLeads.length} leads
+            {assignedToFilter !== 'All' && ` • Assigned to: ${assignedToFilter}`}
+            {establishmentTypeFilter !== 'All' && ` • Type: ${establishmentTypeFilter}`}
+            {statusFilter !== 'All' && ` • Status: ${statusFilter}`}
+          </p>
+        </div>
             <select
               value={callsFilter}
               onChange={(e) => setCallsFilter(e.target.value)}
