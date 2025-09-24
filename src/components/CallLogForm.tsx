@@ -105,7 +105,8 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
             date: new Date(chat.created_at),
             notes: chat.mom,
             additionalInfo: chat.notes,
-            status: chat.call_status
+            status: chat.call_status,
+            created_by: chat.created_by_profile?.name
           });
         });
       }
@@ -120,7 +121,8 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
             date: new Date(followup.created_at),
             notes: followup.notes,
             followupDate: followup.follow_up_date,
-            status: followup.status
+            status: followup.status,
+            created_by: followup.created_by_profile?.name
           });
         });
       }
@@ -289,7 +291,7 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Minutes of Meeting (MoM)
+            Call Notes
           </label>
           <textarea
             value={formData.mom}
@@ -376,6 +378,9 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
                   <div className="flex justify-between items-start mb-2">
                     <h4 className="font-medium text-gray-900">{activity.title}</h4>
                     <span className="text-xs text-gray-500">{formatDate(activity.date)}</span>
+                  </div>
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-xs text-gray-500"><b>Created By: </b>{activity.created_by}</span>
                   </div>
                   {activity.type === 'call' && (
                     <>

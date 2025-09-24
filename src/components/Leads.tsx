@@ -119,7 +119,8 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
             date: new Date(chat.created_at),
             notes: chat.mom,
             additionalInfo: chat.notes,
-            status: chat.call_status
+            status: chat.call_status,
+            created_by: chat.created_by_profile?.name
           });
         });
       }
@@ -134,7 +135,8 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
             date: new Date(followup.created_at),
             notes: followup.notes,
             followupDate: followup.follow_up_date,
-            status: followup.status
+            status: followup.status,
+            created_by: followup.created_by_profile?.name
           });
         });
       }
@@ -568,6 +570,9 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
                         <div className="flex justify-between items-start mb-2">
                           <h5 className="font-medium text-gray-900">{activity.title}</h5>
                           <span className="text-xs text-gray-500">{formatDate(activity.date)}</span>
+                        </div>
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="text-xs text-gray-500"><b>Created By: </b>{activity.created_by}</span>
                         </div>
                         {activity.type === 'call' && (
                           <>
