@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
-import { Search, Filter, Download, Calendar, ChevronDown, Upload, Plus, X, Mail, Phone, Building, User, Edit, UserCheck, FileText, AlertCircle, CheckCircle } from 'lucide-react';
-import { supabase, getAllLeads, getAllEmployees, getChatAndFollowUps } from '../lib/supabase';
+import { Search, Filter, Download, Calendar, ChevronDown, Upload, Plus, X, Mail, Phone, Building, User, Edit, UserCheck, FileText, AlertCircle, CheckCircle, Users, MessageSquare } from 'lucide-react';
+import { supabase, getAllLeads, getAllEmployees, getChatAndFollowUps, getUserProfile } from '../lib/supabase';
 import { userCache } from '../lib/userCache';
 
 const AdminLeads: React.FC = () => {
@@ -9,19 +9,23 @@ const AdminLeads: React.FC = () => {
   const [assignedToFilter, setAssignedToFilter] = useState('All');
   const [establishmentTypeFilter, setEstablishmentTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [sourceFilter, setSourceFilter] = useState('All');
   const [dateRange, setDateRange] = useState('01/01/2024 - 03/31/2024');
   const [selectedLead, setSelectedLead] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingLead, setEditingLead] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedLeads, setSelectedLeads] = useState(new Set());
+  const [showBulkAssignModal, setShowBulkAssignModal] = useState(false);
   const [allLeads, setAllLeads] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [showImportModal, setShowImportModal] = useState(false);
   const [filterOptions, setFilterOptions] = useState({
     assignedTo: ['All'],
     establishmentTypes: ['All'],
-    statuses: ['All']
+    statuses: ['All'],
+    sources: ['All']
   });
 
   // Fetch data from database
@@ -54,6 +58,7 @@ const AdminLeads: React.FC = () => {
         email: lead.email,
         phone: lead.phone,
         company: lead.company,
+        source: lead.source,
         establishmentType: lead.establishment_type,
         assignedTo: lead.assigned_to_profile?.name || 'Unassigned',
         assignedToId: lead.assigned_to,
@@ -67,11 +72,13 @@ const AdminLeads: React.FC = () => {
       const assignedToOptions = ['All', ...new Set(transformedData.map(lead => lead.assignedTo).filter(Boolean))];
       const establishmentTypeOptions = ['All', ...new Set(transformedData.map(lead => lead.establishmentType).filter(Boolean))];
       const statusOptions = ['All', ...new Set(transformedData.map(lead => lead.status).filter(Boolean))];
+      const sourceOptions = ['All', ...new Set(transformedData.map(lead => lead.source).filter(Boolean))];
 
       setFilterOptions({
         assignedTo: assignedToOptions,
         establishmentTypes: establishmentTypeOptions,
-        statuses: statusOptions
+        statuses: statusOptions,
+        sources: sourceOptions
       });
     } catch (error) {
       console.error('Error fetching leads:', error);
@@ -117,9 +124,36 @@ const AdminLeads: React.FC = () => {
     const matchesAssignedTo = assignedToFilter === 'All' || lead.assignedTo === assignedToFilter;
     const matchesEstablishmentType = establishmentTypeFilter === 'All' || lead.establishmentType === establishmentTypeFilter;
     const matchesStatus = statusFilter === 'All' || lead.status === statusFilter;
+    const matchesSource = sourceFilter === 'All' || lead.source === sourceFilter;
 
-    return matchesSearch && matchesAssignedTo && matchesEstablishmentType && matchesStatus;
+    return matchesSearch && matchesAssignedTo && matchesEstablishmentType && matchesStatus && matchesSource;
   });
+
+  const handleSelectLead = (leadId: string) => {
+    const newSelected = new Set(selectedLeads);
+    if (newSelected.has(leadId)) {
+      newSelected.delete(leadId);
+    } else {
+      newSelected.add(leadId);
+    }
+    setSelectedLeads(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedLeads.size === filteredLeads.length) {
+      setSelectedLeads(new Set());
+    } else {
+      setSelectedLeads(new Set(filteredLeads.map(lead => lead.id)));
+    }
+  };
+
+  const handleBulkAssign = () => {
+    if (selectedLeads.size === 0) {
+      alert('Please select leads to assign');
+      return;
+    }
+    setShowBulkAssignModal(true);
+  };
 
   const handleCardClick = (lead) => {
     setSelectedLead(lead);
@@ -325,7 +359,50 @@ const AdminLeads: React.FC = () => {
                 </select>
                 <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
               </div>
+
+              <div className="relative">
+                <select
+                  value={sourceFilter}
+                  onChange={(e) => setSourceFilter(e.target.value)}
+                  className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {filterOptions.sources.map((source) => (
+                    <option key={source} value={source}>
+                      {source === 'All' ? 'All Sources' : source}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+              </div>
             </div>
+          </div>
+        </div>
+
+        {/* Bulk Actions */}
+        <div className="bg-white border-b border-gray-200 px-6 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={selectedLeads.size === filteredLeads.length && filteredLeads.length > 0}
+                  onChange={handleSelectAll}
+                  className="mr-2 rounded"
+                />
+                <span className="text-sm text-gray-700">
+                  Select All ({selectedLeads.size} selected)
+                </span>
+              </label>
+            </div>
+            {selectedLeads.size > 0 && (
+              <button
+                onClick={handleBulkAssign}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium flex items-center space-x-2"
+              >
+                <Users className="w-4 h-4" />
+                <span>Bulk Assign ({selectedLeads.size})</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -333,7 +410,7 @@ const AdminLeads: React.FC = () => {
         <div className="p-6">
           <div className="mb-4">
             <p className="text-sm text-gray-600">
-              Showing {filteredLeads.length} of {allLeads.length} leads
+              Showing {filteredLeads.length} of {allLeads.length} leads {selectedLeads.size > 0 && `(${selectedLeads.size} selected)`}
               {assignedToFilter !== 'All' && ` • Assigned to: ${assignedToFilter}`}
               {establishmentTypeFilter !== 'All' && ` • Type: ${establishmentTypeFilter}`}
               {statusFilter !== 'All' && ` • Status: ${statusFilter}`}
@@ -468,6 +545,10 @@ const AdminLeads: React.FC = () => {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
+                      <p className="text-sm text-gray-600">Source</p>
+                      <p className="text-gray-900">{selectedLead.source || 'Unknown'}</p>
+                    </div>
+                    <div>
                       <p className="text-sm text-gray-600">Lead ID</p>
                       <p className="text-gray-900">#{selectedLead.id}</p>
                     </div>
@@ -545,6 +626,37 @@ const AdminLeads: React.FC = () => {
               fetchLeads(); // Refresh leads after import
             }}
             employees={employees}
+          />
+        )}
+
+        {/* Bulk Assign Modal */}
+        {showBulkAssignModal && (
+          <BulkAssignModal
+            selectedLeads={Array.from(selectedLeads)}
+            employees={employees}
+            onAssign={async (employeeId) => {
+              try {
+                const { error } = await supabase
+                  .from('leads')
+                  .update({ assigned_to: employeeId })
+                  .in('id', Array.from(selectedLeads));
+
+                if (error) {
+                  console.error('Error bulk assigning leads:', error);
+                  alert('Error assigning leads');
+                  return;
+                }
+
+                alert(`Successfully assigned ${selectedLeads.size} leads`);
+                setSelectedLeads(new Set());
+                setShowBulkAssignModal(false);
+                fetchLeads();
+              } catch (error) {
+                console.error('Error bulk assigning leads:', error);
+                alert('Error assigning leads');
+              }
+            }}
+            onClose={() => setShowBulkAssignModal(false)}
           />
         )}
       </div>
@@ -1345,6 +1457,77 @@ const CSVImportModal = ({ onClose, onImportComplete, employees }) => {
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+};
+
+// Bulk Assign Modal Component
+const BulkAssignModal = ({ selectedLeads, employees, onAssign, onClose }) => {
+  const [selectedEmployee, setSelectedEmployee] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!selectedEmployee) {
+      alert('Please select an employee');
+      return;
+    }
+    onAssign(selectedEmployee);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-md w-full">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">Bulk Assign Leads</h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+          >
+            <X className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="mb-4">
+            <p className="text-sm text-gray-600 mb-4">
+              Assign {selectedLeads.length} selected leads to:
+            </p>
+            
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Employee
+            </label>
+            <select
+              value={selectedEmployee}
+              onChange={(e) => setSelectedEmployee(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required
+            >
+              <option value="">Choose an employee...</option>
+              {employees.map((employee) => (
+                <option key={employee.id} value={employee.id}>
+                  {employee.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-md transition-colors duration-200 font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors duration-200 font-medium"
+            >
+              Assign Leads
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
