@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect } from 'react';
-import { UserCheck, Search, Filter, X, Mail, Phone, Building, User, Calendar } from 'lucide-react';
+import { UserCheck, Search, Filter, X, Mail, Phone, Building, User, Calendar, Plus, Save } from 'lucide-react';
 import { supabase, getLeadsAssignedToCurrentUser, getUserProfile, getChatAndFollowUps } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { userCache } from '../lib/userCache';
@@ -17,6 +17,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
   const [allLeads, setAllLeads] = React.useState([]);
   const [recentActivity, setRecentActivity] = React.useState([]);
   const [activityLoading, setActivityLoading] = React.useState(false);
+  const [showAddLeadModal, setShowAddLeadModal] = React.useState(false);
   const { userProfile, user } = useAuth();
 
   // Fetch leads from database
@@ -238,6 +239,13 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
           <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setShowAddLeadModal(true)}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium flex items-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Lead</span>
+            </button>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
@@ -498,8 +506,232 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
           </div>
         </div>
       )}
+
+      {/* Add Lead Modal */}
+      {showAddLeadModal && (
+        <AddLeadModal
+          onClose={() => setShowAddLeadModal(false)}
+          onLeadAdded={() => {
+            setShowAddLeadModal(false);
+            fetchLeads(); // Refresh leads list
+          }}
+          currentUser={user}
+          currentUserProfile={userProfile}
+        />
+      )}
     </div>
   );
 };
 
+// Add Lead Modal Component
+const AddLeadModal = ({ onClose, onLeadAdded, currentUser, currentUserProfile }) => {
+  const [formData, setFormData] = React.useState({
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    establishmentType: ''
+  });
+  const [saving, setSaving] = React.useState(false);
+  const [error, setError] = React.useState('');
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setError('');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.name || !formData.email || !formData.phone) {
+      setError('Please fill in all required fields (Name, Email, Phone)');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+
+    try {
+      // Get current user profile
+      let currentProfile = currentUserProfile;
+      if (!currentProfile) {
+        const { data: profileData } = await getUserProfile(currentUser.id);
+        if (!profileData) {
+          setError('Error fetching user profile');
+          setSaving(false);
+          return;
+        }
+        currentProfile = profileData;
+      }
+
+      // Create new lead
+      const { data: leadData, error: leadError } = await supabase
+        .from('leads')
+        .insert([
+          {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            company: formData.company || '',
+            establishment_type: formData.establishmentType || '',
+            status: 'Open',
+            assigned_to: currentProfile.id,
+            calls_made: 0,
+            last_contact: null
+          }
+        ])
+        .select()
+        .single();
+
+      if (leadError) {
+        console.error('Error creating lead:', leadError);
+        setError('Error creating lead: ' + leadError.message);
+        setSaving(false);
+        return;
+      }
+
+      console.log('Lead created successfully:', leadData);
+      onLeadAdded();
+    } catch (error) {
+      console.error('Error creating lead:', error);
+      setError('An unexpected error occurred');
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">Add New Lead</h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+          >
+            <X className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <User className="w-4 h-4 inline mr-2" />
+              Contact Name *
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleChange('name', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="Enter contact name"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Mail className="w-4 h-4 inline mr-2" />
+              Email *
+            </label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleChange('email', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="Enter email address"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Phone className="w-4 h-4 inline mr-2" />
+              Phone *
+            </label>
+            <input
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => handleChange('phone', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="Enter phone number"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Building className="w-4 h-4 inline mr-2" />
+              Company
+            </label>
+            <input
+              type="text"
+              value={formData.company}
+              onChange={(e) => handleChange('company', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="Enter company name"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Establishment Type
+            </label>
+            <select
+              value={formData.establishmentType}
+              onChange={(e) => handleChange('establishmentType', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            >
+              <option value="">Select establishment type</option>
+              <option value="Clinic">Clinic</option>
+              <option value="Hospital">Hospital</option>
+              <option value="Distributor">Distributor</option>
+              <option value="Pharmacy">Pharmacy</option>
+            </select>
+          </div>
+
+          <div className="flex space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-md transition-colors duration-200 font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white py-2 px-4 rounded-md transition-colors duration-200 font-medium flex items-center justify-center space-x-2"
+            >
+              {saving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>Add Lead</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 export default Leads;
