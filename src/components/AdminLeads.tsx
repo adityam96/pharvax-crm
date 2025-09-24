@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { Search, Filter, Download, Calendar, ChevronDown, Upload, Plus, X, Mail, Phone, Building, User, Edit, UserCheck, FileText, AlertCircle, CheckCircle, Users, MessageSquare, Send } from 'lucide-react';
-import { supabase, getAllLeads, getAllEmployees, getChatAndFollowUps, getUserProfile } from '../lib/supabase';
+import { supabase, getAllLeads, getAllEmployees, getChatAndFollowUps, getUserProfile, getAllNotes } from '../lib/supabase';
 import { userCache } from '../lib/userCache';
 
 const AdminLeads: React.FC = () => {
@@ -119,15 +119,9 @@ const AdminLeads: React.FC = () => {
     try {
       setNotesLoading(true);
 
-      const { data: notes, error } = await supabase
-        .from('lead_notes')
-        .select(`
-          *,
-          created_by_profile:user_profiles!created_by(name)
-        `)
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false });
+      const { data: notes, error } = await getAllNotes(leadId);
 
+      console.log('Fetched admin notes:', notes);
       if (error) {
         console.error('Error fetching admin notes:', error);
         return;
@@ -158,6 +152,12 @@ const AdminLeads: React.FC = () => {
         currentUserProfile = profileData;
       }
 
+      console.log('Storing data: ', {
+        lead_id: selectedLead.id,
+        created_by: currentUserProfile.id,
+        notes: newNote.trim(),
+        level: 'ADMIN'
+      });
       const { error } = await supabase
         .from('lead_notes')
         .insert([
@@ -165,7 +165,7 @@ const AdminLeads: React.FC = () => {
             lead_id: selectedLead.id,
             created_by: currentUserProfile.id,
             notes: newNote.trim(),
-            level: noteLevel
+            level: 'ADMIN'
           }
         ]);
 
@@ -663,94 +663,11 @@ const AdminLeads: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Lead Information */}
-                <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
-                    Lead Information
-                  </h4>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Source</p>
-                      <p className="text-gray-900">{selectedLead.source || 'Unknown'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Lead ID</p>
-                      <p className="text-gray-900">#{selectedLead.id}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Status</p>
-                      <p className="text-gray-900">{selectedLead.status}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Recent Activity */}
-                <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
-                    Recent Activity
-                  </h4>
-
-                  <RecentActivitySection leadId={selectedLead.id} />
-                </div>
-
                 {/* Admin Notes Section */}
                 <div className="space-y-4 pt-6 border-t border-gray-200">
                   <div className="flex items-center justify-between">
                     <h4 className="text-lg font-semibold text-gray-900">Admin Notes</h4>
                     <MessageSquare className="w-5 h-5 text-gray-400" />
-                  </div>
-
-                  {/* Add New Note */}
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Add Note
-                        </label>
-                        <textarea
-                          value={newNote}
-                          onChange={(e) => setNewNote(e.target.value)}
-                          rows={3}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Enter your note..."
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Priority Level
-                          </label>
-                          <select
-                            value={noteLevel}
-                            onChange={(e) => setNoteLevel(e.target.value)}
-                            className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                          >
-                            <option value="info">Info</option>
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                          </select>
-                        </div>
-                        <button
-                          onClick={handleAddNote}
-                          disabled={!newNote.trim() || addingNote}
-                          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-md transition-colors duration-200 font-medium flex items-center space-x-2"
-                        >
-                          {addingNote ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                              <span>Adding...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Send className="w-4 h-4" />
-                              <span>Add Note</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
                   </div>
 
                   {/* Display Notes */}
@@ -791,6 +708,74 @@ const AdminLeads: React.FC = () => {
                       <p className="text-gray-600">No admin notes found for this lead.</p>
                     </div>
                   )}
+                </div>
+
+                {/* Add New Note */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Add Note
+                      </label>
+                      <textarea
+                        value={newNote}
+                        onChange={(e) => setNewNote(e.target.value)}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Enter your note..."
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <button
+                        onClick={handleAddNote}
+                        disabled={!newNote.trim() || addingNote}
+                        className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-md transition-colors duration-200 font-medium flex items-center space-x-2"
+                      >
+                        {addingNote ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Adding...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4" />
+                            <span>Add Note</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Lead Information */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                    Lead Information
+                  </h4>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Source</p>
+                      <p className="text-gray-900">{selectedLead.source || 'Unknown'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Lead ID</p>
+                      <p className="text-gray-900">#{selectedLead.id}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Status</p>
+                      <p className="text-gray-900">{selectedLead.status}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Recent Activity */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                    Recent Activity
+                  </h4>
+
+                  <RecentActivitySection leadId={selectedLead.id} />
                 </div>
 
                 {/* Action Buttons */}
@@ -932,7 +917,8 @@ const RecentActivitySection = ({ leadId }) => {
             date: new Date(chat.created_at),
             notes: chat.mom,
             additionalInfo: chat.notes,
-            status: chat.call_status
+            status: chat.call_status,
+            created_by: chat.created_by_profile?.name
           });
         });
       }
@@ -947,7 +933,8 @@ const RecentActivitySection = ({ leadId }) => {
             date: new Date(followup.created_at),
             notes: followup.notes,
             followupDate: followup.follow_up_date,
-            status: followup.status
+            status: followup.status,
+            created_by: followup.created_by_profile?.name
           });
         });
       }
@@ -1026,6 +1013,10 @@ const RecentActivitySection = ({ leadId }) => {
           <div className="flex justify-between items-start mb-2">
             <h5 className="font-medium text-gray-900">{activity.title}</h5>
             <span className="text-xs text-gray-500">{formatDate(activity.date)}</span>
+
+          </div>
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-xs text-gray-500"><b>Created By:</b> {activity.created_by}</span>
           </div>
           {activity.type === 'call' && (
             <>
@@ -1718,7 +1709,7 @@ const BulkAssignModal = ({ selectedLeads, employees, onAssign, onClose }) => {
             <p className="text-sm text-gray-600 mb-4">
               Assign {selectedLeads.length} selected leads to:
             </p>
-            
+
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Select Employee
             </label>

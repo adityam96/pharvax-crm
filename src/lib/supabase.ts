@@ -194,18 +194,57 @@ export const getChatAndFollowUps = async (leadId: string) => {
     const [chatsResponse, followupsResponse] = await logSupabaseCall('getChatAndFollowUps', () => Promise.all([
       supabase
         .from('chats')
-        .select('*')
+        .select(`
+          *,
+          created_by_profile:user_profiles!user_id(name)
+        `)
         .eq('lead_id', leadId)
         .order('created_at', { ascending: false })
         .limit(10),
       supabase
         .from('followups')
-        .select('*')
+        .select(`
+          *,
+          created_by_profile:user_profiles!user_id(name)
+        `)
         .eq('lead_id', leadId)
         .order('created_at', { ascending: false })
         .limit(10)
     ]))
     return [chatsResponse, followupsResponse]
+  } catch (error) {
+    return { user: null, error }
+  }
+}
+
+export const getAllNotes = async (leadId: string) => {
+  try {
+    const { data, error } = await logSupabaseCall('getAllNotes', () => supabase
+      .from('lead_notes')
+      .select(`
+          *,
+          created_by_profile:user_profiles!created_by(name)
+        `)
+      .eq('lead_id', leadId)
+      .order('level', { ascending: false }))
+    return { data, error }
+  } catch (error) {
+    return { user: null, error }
+  }
+}
+
+export const getEmployeeNotes = async (leadId: string) => {
+  try {
+    const { data, error } = await logSupabaseCall('getAllNotes', () => supabase
+      .from('lead_notes')
+      .select(`
+          *,
+          created_by_profile:user_profiles!created_by(name)
+        `)
+      .eq('lead_id', leadId)
+      .neq('level', 'ADMIN')
+      .order('created_at', { ascending: false }))
+    return { data, error }
   } catch (error) {
     return { user: null, error }
   }

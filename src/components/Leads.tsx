@@ -1,7 +1,7 @@
 import React from 'react';
 import { useEffect } from 'react';
 import { UserCheck, Search, Filter, X, Mail, Phone, Building, User, Calendar, Plus, Save, MessageSquare, Send } from 'lucide-react';
-import { supabase, getLeadsAssignedToCurrentUser, getUserProfile, getChatAndFollowUps } from '../lib/supabase';
+import { supabase, getLeadsAssignedToCurrentUser, getUserProfile, getChatAndFollowUps, getEmployeeNotes } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { userCache } from '../lib/userCache';
 
@@ -17,7 +17,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
   const [allLeads, setAllLeads] = React.useState([]);
   const [recentActivity, setRecentActivity] = React.useState([]);
   const [activityLoading, setActivityLoading] = React.useState(false);
-  const [adminNotes, setAdminNotes] = React.useState([]);
+  const [notes, setNotes] = React.useState([]);
   const [notesLoading, setNotesLoading] = React.useState(false);
   const [newNote, setNewNote] = React.useState('');
   const [noteLevel, setNoteLevel] = React.useState('info');
@@ -36,7 +36,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
   useEffect(() => {
     if (selectedLead) {
       fetchRecentActivity(selectedLead.id);
-      fetchAdminNotes(selectedLead.id);
+      fetchNotes(selectedLead.id);
     }
   }, [selectedLead]);
   const fetchLeads = async () => {
@@ -150,27 +150,20 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
     }
   };
 
-  const fetchAdminNotes = async (leadId: string) => {
+  const fetchNotes = async (leadId: string) => {
     try {
       setNotesLoading(true);
 
-      const { data: notes, error } = await supabase
-        .from('lead_notes')
-        .select(`
-          *,
-          created_by_profile:user_profiles!created_by(name)
-        `)
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false });
+      const { data: notes, error } = await getEmployeeNotes(leadId);
 
       if (error) {
-        console.error('Error fetching admin notes:', error);
+        console.error('Error fetching notes:', error);
         return;
       }
 
-      setAdminNotes(notes || []);
+      setNotes(notes || []);
     } catch (error) {
-      console.error('Error fetching admin notes:', error);
+      console.error('Error fetching notes:', error);
     } finally {
       setNotesLoading(false);
     }
@@ -200,7 +193,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
             lead_id: selectedLead.id,
             created_by: currentUserProfile.id,
             notes: newNote.trim(),
-            level: noteLevel
+            level: 'EMPLOYEE'
           }
         ]);
 
@@ -213,7 +206,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
       // Clear form and refresh notes
       setNewNote('');
       setNoteLevel('info');
-      fetchAdminNotes(selectedLead.id);
+      fetchNotes(selectedLead.id);
     } catch (error) {
       console.error('Error adding note:', error);
       alert('Error adding note');
@@ -336,7 +329,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
   const closeModal = () => {
     setSelectedLead(null);
     setRecentActivity([]);
-    setAdminNotes([]);
+    setNotes([]);
     setNewNote('');
     setNoteLevel('info');
   };
@@ -623,10 +616,10 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
                 </button>
               </div>
 
-              {/* Admin Notes Section */}
+              {/* Notes Section */}
               <div className="space-y-4 pt-6 border-t border-gray-200">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-lg font-semibold text-gray-900">Admin Notes</h4>
+                  <h4 className="text-lg font-semibold text-gray-900">Notes</h4>
                   <MessageSquare className="w-5 h-5 text-gray-400" />
                 </div>
 
@@ -646,21 +639,6 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
                       />
                     </div>
                     <div className="flex items-center justify-between">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Priority Level
-                        </label>
-                        <select
-                          value={noteLevel}
-                          onChange={(e) => setNoteLevel(e.target.value)}
-                          className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
-                        >
-                          <option value="info">Info</option>
-                          <option value="low">Low</option>
-                          <option value="medium">Medium</option>
-                          <option value="high">High</option>
-                        </select>
-                      </div>
                       <button
                         onClick={handleAddNote}
                         disabled={!newNote.trim() || addingNote}
@@ -688,9 +666,9 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
                     <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin mr-2"></div>
                     <span className="text-gray-600">Loading notes...</span>
                   </div>
-                ) : adminNotes.length > 0 ? (
+                ) : notes.length > 0 ? (
                   <div className="space-y-3 max-h-64 overflow-y-auto">
-                    {adminNotes.map((note) => (
+                    {notes.map((note) => (
                       <div
                         key={note.id}
                         className={`rounded-lg p-4 border ${getNoteColor(note.level)}`}
@@ -717,7 +695,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
                 ) : (
                   <div className="text-center py-4">
                     <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-600">No admin notes found for this lead.</p>
+                    <p className="text-gray-600">No notes found for this lead.</p>
                   </div>
                 )}
               </div>
@@ -761,7 +739,7 @@ const AddLeadModal = ({ onClose, onLeadAdded, currentUser, currentUserProfile })
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (!formData.name || !formData.email || !formData.phone) {
       setError('Please fill in all required fields (Name, Email, Phone)');
