@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect } from 'react';
-import { UserCheck, Search, Filter, X, Mail, Phone, Building, User, Calendar, Plus, Save } from 'lucide-react';
+import { UserCheck, Search, Filter, X, Mail, Phone, Building, User, Calendar, Plus, Save, MessageSquare, Send } from 'lucide-react';
 import { supabase, getLeadsAssignedToCurrentUser, getUserProfile, getChatAndFollowUps } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { userCache } from '../lib/userCache';
@@ -17,6 +17,11 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
   const [allLeads, setAllLeads] = React.useState([]);
   const [recentActivity, setRecentActivity] = React.useState([]);
   const [activityLoading, setActivityLoading] = React.useState(false);
+  const [adminNotes, setAdminNotes] = React.useState([]);
+  const [notesLoading, setNotesLoading] = React.useState(false);
+  const [newNote, setNewNote] = React.useState('');
+  const [noteLevel, setNoteLevel] = React.useState('info');
+  const [addingNote, setAddingNote] = React.useState(false);
   const [showAddLeadModal, setShowAddLeadModal] = React.useState(false);
   const { userProfile, user } = useAuth();
 
@@ -31,6 +36,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
   useEffect(() => {
     if (selectedLead) {
       fetchRecentActivity(selectedLead.id);
+      fetchAdminNotes(selectedLead.id);
     }
   }, [selectedLead]);
   const fetchLeads = async () => {
@@ -144,6 +150,117 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
     }
   };
 
+  const fetchAdminNotes = async (leadId: string) => {
+    try {
+      setNotesLoading(true);
+
+      const { data: notes, error } = await supabase
+        .from('lead_notes')
+        .select(`
+          *,
+          created_by_profile:user_profiles!created_by(name)
+        `)
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching admin notes:', error);
+        return;
+      }
+
+      setAdminNotes(notes || []);
+    } catch (error) {
+      console.error('Error fetching admin notes:', error);
+    } finally {
+      setNotesLoading(false);
+    }
+  };
+
+  const handleAddNote = async () => {
+    if (!newNote.trim() || !selectedLead) return;
+
+    try {
+      setAddingNote(true);
+
+      // Get current user profile
+      let currentUserProfile = userCache.getProfile();
+      if (!currentUserProfile) {
+        const { data: profileData } = await getUserProfile(user.id);
+        if (!profileData) {
+          alert('Error fetching user profile');
+          return;
+        }
+        currentUserProfile = profileData;
+      }
+
+      const { error } = await supabase
+        .from('lead_notes')
+        .insert([
+          {
+            lead_id: selectedLead.id,
+            created_by: currentUserProfile.id,
+            notes: newNote.trim(),
+            level: noteLevel
+          }
+        ]);
+
+      if (error) {
+        console.error('Error adding note:', error);
+        alert('Error adding note');
+        return;
+      }
+
+      // Clear form and refresh notes
+      setNewNote('');
+      setNoteLevel('info');
+      fetchAdminNotes(selectedLead.id);
+    } catch (error) {
+      console.error('Error adding note:', error);
+      alert('Error adding note');
+    } finally {
+      setAddingNote(false);
+    }
+  };
+
+  const getNoteColor = (level: string) => {
+    switch (level) {
+      case 'high':
+        return 'bg-red-50 border-red-200';
+      case 'medium':
+        return 'bg-yellow-50 border-yellow-200';
+      case 'low':
+        return 'bg-blue-50 border-blue-200';
+      default:
+        return 'bg-gray-50 border-gray-200';
+    }
+  };
+
+  const getNoteTextColor = (level: string) => {
+    switch (level) {
+      case 'high':
+        return 'text-red-900';
+      case 'medium':
+        return 'text-yellow-900';
+      case 'low':
+        return 'text-blue-900';
+      default:
+        return 'text-gray-900';
+    }
+  };
+
+  const getLevelBadgeColor = (level: string) => {
+    switch (level) {
+      case 'high':
+        return 'bg-red-100 text-red-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'low':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const getCallTitle = (callStatus: string) => {
     switch (callStatus) {
       case 'list-sent':
@@ -219,6 +336,9 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
   const closeModal = () => {
     setSelectedLead(null);
     setRecentActivity([]);
+    setAdminNotes([]);
+    setNewNote('');
+    setNoteLevel('info');
   };
 
   if (loading) {
@@ -501,6 +621,105 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
                 >
                   Log Call
                 </button>
+              </div>
+
+              {/* Admin Notes Section */}
+              <div className="space-y-4 pt-6 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-lg font-semibold text-gray-900">Admin Notes</h4>
+                  <MessageSquare className="w-5 h-5 text-gray-400" />
+                </div>
+
+                {/* Add New Note */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Add Note
+                      </label>
+                      <textarea
+                        value={newNote}
+                        onChange={(e) => setNewNote(e.target.value)}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        placeholder="Enter your note..."
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Priority Level
+                        </label>
+                        <select
+                          value={noteLevel}
+                          onChange={(e) => setNoteLevel(e.target.value)}
+                          className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                        >
+                          <option value="info">Info</option>
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                        </select>
+                      </div>
+                      <button
+                        onClick={handleAddNote}
+                        disabled={!newNote.trim() || addingNote}
+                        className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-4 py-2 rounded-md transition-colors duration-200 font-medium flex items-center space-x-2"
+                      >
+                        {addingNote ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Adding...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4" />
+                            <span>Add Note</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Display Notes */}
+                {notesLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                    <span className="text-gray-600">Loading notes...</span>
+                  </div>
+                ) : adminNotes.length > 0 ? (
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {adminNotes.map((note) => (
+                      <div
+                        key={note.id}
+                        className={`rounded-lg p-4 border ${getNoteColor(note.level)}`}
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium text-gray-900">
+                              {note.created_by_profile?.name || 'Unknown User'}
+                            </span>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getLevelBadgeColor(note.level)}`}>
+                              {note.level.charAt(0).toUpperCase() + note.level.slice(1)}
+                            </span>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {new Date(note.created_at).toLocaleDateString()} {new Date(note.created_at).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <p className={`text-sm ${getNoteTextColor(note.level)}`}>
+                          {note.notes}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-600">No admin notes found for this lead.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
