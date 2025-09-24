@@ -47,7 +47,6 @@ const AdminEmployees: React.FC = () => {
         joinDate: profile.created_at?.split('T')[0] || '',
         status: profile.is_active ? 'Active' : 'Inactive',
         department: profile.department,
-        location: profile.location,
         user_id: profile.user_id,
         is_active: profile.is_active ?? true
       }));
@@ -117,7 +116,6 @@ const AdminEmployees: React.FC = () => {
         .update({
           phone: updatedEmployee.phone,
           department: updatedEmployee.department,
-          location: updatedEmployee.location,
           position: updatedEmployee.role,
           is_active: updatedEmployee.is_active
         })
@@ -207,7 +205,6 @@ const AdminEmployees: React.FC = () => {
                 <tr>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Name</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Role</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Location</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Status</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Join Date</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-900">Actions</th>
@@ -228,7 +225,6 @@ const AdminEmployees: React.FC = () => {
                         {employee.role}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-gray-900">{employee.location}</td>
                     <td className="py-3 px-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${employee.is_active
                         ? 'bg-green-100 text-green-800'
@@ -377,26 +373,6 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
                 >
                   <option value="Sales Manager">Sales Manager</option>
                   <option value="Sales Representative">Sales Representative</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Location
-                </label>
-                <select
-                  value={formData.location}
-                  onChange={(e) => handleChange('location', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                >
-                  <option value="Mumbai">Mumbai</option>
-                  <option value="Delhi">Delhi</option>
-                  <option value="Bangalore">Bangalore</option>
-                  <option value="Chennai">Chennai</option>
-                  <option value="Pune">Pune</option>
-                  <option value="Hyderabad">Hyderabad</option>
-                  <option value="Kolkata">Kolkata</option>
                 </select>
               </div>
 

@@ -11,7 +11,6 @@ const SignUpPage: React.FC = () => {
     role: '',
     position: '',
     department: 'Sales',
-    location: '',
     phone: ''
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -68,7 +67,6 @@ const SignUpPage: React.FC = () => {
         role: formData.role,
         position: formData.position,
         department: formData.department,
-        location: formData.location,
         phone: formData.phone
       });
 
@@ -89,7 +87,6 @@ const SignUpPage: React.FC = () => {
           role: '',
           position: '',
           department: 'Sales',
-          location: '',
           phone: ''
         });
       }
@@ -107,9 +104,9 @@ const SignUpPage: React.FC = () => {
         {/* Logo and Company Info */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <img 
-              src="/logo.png" 
-              alt="Pharvax Biosciences" 
+            <img
+              src="/logo.png"
+              alt="Pharvax Biosciences"
               className="h-16 w-auto"
             />
           </div>
@@ -262,7 +259,7 @@ const SignUpPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Department and Location */}
+            {/* Department */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -280,28 +277,6 @@ const SignUpPage: React.FC = () => {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Location
-                </label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <select
-                    value={formData.location}
-                    onChange={(e) => handleChange('location', e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  >
-                    <option value="">Select location</option>
-                    <option value="Mumbai">Mumbai</option>
-                    <option value="Delhi">Delhi</option>
-                    <option value="Bangalore">Bangalore</option>
-                    <option value="Chennai">Chennai</option>
-                    <option value="Pune">Pune</option>
-                    <option value="Hyderabad">Hyderabad</option>
-                    <option value="Kolkata">Kolkata</option>
-                  </select>
-                </div>
-              </div>
             </div>
 
             {/* Phone Number */}
@@ -335,7 +310,7 @@ const SignUpPage: React.FC = () => {
           <div className="mt-6 p-4 bg-green-50 rounded-md">
             <h3 className="text-sm font-medium text-green-900 mb-2">For Administrators:</h3>
             <p className="text-xs text-green-700">
-              This registration form is for internal use only. New employee accounts will need to be approved 
+              This registration form is for internal use only. New employee accounts will need to be approved
               and activated by an administrator before they can access the system.
             </p>
           </div>

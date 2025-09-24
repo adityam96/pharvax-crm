@@ -342,7 +342,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 role: metadata?.role || 'employee',
                 position: metadata?.position || '',
                 department: metadata?.department || 'Sales',
-                location: metadata?.location || '',
                 phone: metadata?.phone || ''
               }
             ])
