@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { Search, Filter, Edit, Trash2, ChevronDown, X, User, Mail, Phone, Calendar, UserCheck, TrendingUp, FileText } from 'lucide-react';
-import { getAllEmployees, supabase, logSupabaseCall } from '../lib/supabase';
+import { getAllEmployees, supabase, logSupabaseCall, getChatAndFollowUpsForEmployee } from '../lib/supabase';
 import { userCache } from '../lib/userCache';
 
 const AdminEmployees: React.FC = () => {
@@ -305,16 +305,7 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
       setInteractionsLoading(true);
 
       // Fetch chats for this employee
-      const { data: chats, error: chatsError } = await supabase
-        .from('chats')
-        .select(`
-          *,
-          lead:leads(id, name, company, status),
-          user_profile:user_profiles!user_id(name)
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(10);
+      const { data: chats, error: chatsError } = await getChatAndFollowUpsForEmployee(userId);
 
       if (chatsError) {
         console.error('Error fetching chats:', chatsError);
@@ -575,11 +566,10 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
                           <h4 className="font-medium text-gray-900">{interaction.leadName}</h4>
                           <p className="text-sm text-blue-600">{interaction.company}</p>
                         </div>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          interaction.status === 'Open' ? 'bg-green-100 text-green-800' :
-                          interaction.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${interaction.status === 'Open' ? 'bg-green-100 text-green-800' :
+                            interaction.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                          }`}>
                           {interaction.status}
                         </span>
                       </div>

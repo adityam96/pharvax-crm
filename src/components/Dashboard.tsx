@@ -3,9 +3,10 @@ import { useEffect } from 'react';
 import { Search, Plus, GripVertical } from 'lucide-react';
 import LeadCard from './LeadCard';
 import CallLogForm from './CallLogForm';
-import { supabase, getLeadsAssignedToCurrentUser, getUserProfile } from '../lib/supabase';
+import { supabase, getOpenLeadsAssignedToCurrentUser, getUserProfile } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { userCache } from '../lib/userCache';
+import { getLeadStatusFromCallStatus } from '../lib/utils';
 
 interface Lead {
   id: string;
@@ -69,7 +70,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
 
       console.log('Using user profile:', currentUserProfile);
       // Fetch leads assigned to current user
-      const { data, error } = await getLeadsAssignedToCurrentUser(currentUserProfile.id);
+      const { data, error } = await getOpenLeadsAssignedToCurrentUser(currentUserProfile.id);
 
       console.log('Fetched leads:', data, 'error:', error);
       if (error) {
@@ -159,14 +160,20 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
       throw new Error(`Error saving chat: ${chatError.message}`);
     }
 
-    // Update lead's calls_made count and last_contact
-    const { error: leadError } = await supabase
+    console.log('Lead data', lead)
+    // Update lead's calls_made count, status and last_contact
+    const { data: updatedLead, error: leadError } = await supabase
       .from('leads')
       .update({
-        calls_made: (lead.callsMade || 0) + 1,
-        last_contact: new Date().toISOString()
+        last_contact: new Date().toISOString(),
+        status: getLeadStatusFromCallStatus(callData.callStatus)
       })
-      .eq('id', lead.id);
+      .eq('id', lead.id)
+      .select()
+      .single();
+
+    console.log('Lead update result:', { updatedLead, leadError });
+
 
     if (leadError) {
       throw new Error(`Error updating lead: ${leadError.message}`);

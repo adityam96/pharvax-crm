@@ -143,9 +143,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log(`fetchUserProfileWithRetry called for userId: ${userId} from: ${caller}`)
 
     const startTime = Date.now()
-    const maxDuration = 10000 // 10 seconds
+    const maxDuration = 3000 // 10 seconds
     let attempts = 0
-    const maxAttempts = 5
+    const maxAttempts = 10
 
     while (attempts < maxAttempts) {
       const elapsedTime = Date.now() - startTime
@@ -164,7 +164,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return // Success!
       } catch (error) {
         // Only log as warning until the final attempt
-        if (attempts >= maxAttempts || (Date.now() - startTime) >= maxDuration) {
+        console.log('Attempt number:', attempts)
+        if (attempts >= maxAttempts) {
           console.error(`Profile fetch attempt ${attempts} failed (final attempt):`, error)
           throw error
         } else {
@@ -172,7 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         // Wait before next attempt (but don't exceed total time limit)
-        const waitTime = Math.min(2000, maxDuration - (Date.now() - startTime))
+        const waitTime = Math.min(500, maxDuration - (Date.now() - startTime))
         if (waitTime > 0) {
           console.log(`Waiting ${waitTime}ms before next attempt...`)
           await sleep(waitTime)

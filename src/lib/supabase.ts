@@ -111,6 +111,23 @@ export const getLeadsAssignedToCurrentUser = async (userProfileId: string) => {
   }
 }
 
+export const getOpenLeadsAssignedToCurrentUser = async (userProfileId: string) => {
+  try {
+    const { data, error } = await logSupabaseCall('getLeadsAssignedToCurrentUser', () => supabase
+      .from('leads')
+      .select(`
+              *,
+              assigned_to_profile:user_profiles!assigned_to(name)
+            `)
+      .eq('assigned_to', userProfileId)
+      .neq('status', 'Closed')
+      .order('created_at', { ascending: false }))
+    return { data, error }
+  } catch (error) {
+    return { user: null, error }
+  }
+}
+
 export const getAllLeads = async () => {
   try {
     const { data, error } = await logSupabaseCall('getAllLeads', () => supabase
@@ -170,6 +187,7 @@ export const getAllActiveEmployees = async () => {
       .from('user_profiles')
       .select('id, name')
       .eq('is_active', true)
+      .neq('role', 'admin')
       .order('name'))
     return { data, error }
   } catch (error) {
@@ -182,6 +200,7 @@ export const getAllEmployees = async () => {
     const { data, error } = await logSupabaseCall('getAllEmployees', () => supabase
       .from('user_profiles')
       .select('*')
+      .neq('role', 'admin')
       .order('created_at', { ascending: false }))
     return { data, error }
   } catch (error) {
@@ -212,6 +231,24 @@ export const getChatAndFollowUps = async (leadId: string) => {
         .limit(10)
     ]))
     return [chatsResponse, followupsResponse]
+  } catch (error) {
+    return { user: null, error }
+  }
+}
+
+export const getChatAndFollowUpsForEmployee = async (employeeUserId: string) => {
+  try {
+    const { data, error } = await logSupabaseCall('getChatAndFollowUps', () => supabase
+      .from('chats')
+      .select(`
+              *,
+              lead:leads(id, name, company, status),
+              user_profile:user_profiles!user_id(name)
+            `)
+      .eq('user_id', employeeUserId)
+      .order('created_at', { ascending: false })
+      .limit(100))
+    return { data, error }
   } catch (error) {
     return { user: null, error }
   }
