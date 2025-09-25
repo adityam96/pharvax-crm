@@ -3,13 +3,15 @@ import { BarChart3, TrendingUp, Users, UserCheck, Calendar, Download, Filter, Ch
 import { supabase, logSupabaseCall } from '../lib/supabase';
 
 const AdminReports: React.FC = () => {
+  const today = new Date().toISOString().slice(0, 10);
+
   const [dateRange, setDateRange] = useState({
-    startDate: '2024-01-01',
-    endDate: '2024-12-31'
+    startDate: today,
+    endDate: today
   });
   const [reportType, setReportType] = useState('All');
   const [loading, setLoading] = useState(false);
-  
+
   // Report data states
   const [employeeCallsData, setEmployeeCallsData] = useState([]);
   const [employeeLeadsData, setEmployeeLeadsData] = useState([]);
@@ -37,7 +39,7 @@ const AdminReports: React.FC = () => {
   // Report 1: Employee person wise total calls unique on date
   const fetchEmployeeCallsReport = async () => {
     try {
-      const { data, error } = await logSupabaseCall('fetchEmployeeCallsReport', () => 
+      const { data, error } = await logSupabaseCall('fetchEmployeeCallsReport', () =>
         supabase
           .from('chats')
           .select(`
@@ -58,15 +60,15 @@ const AdminReports: React.FC = () => {
 
       // Process data to get unique calls per employee per date
       const callsMap = new Map();
-      
+
       data.forEach(chat => {
         const userId = chat.user_id;
         const leadId = chat.lead_id;
         const date = new Date(chat.created_at).toDateString();
         const userName = chat.user_profiles?.name || 'Unknown User';
-        
+
         const key = `${userId}-${date}`;
-        
+
         if (!callsMap.has(key)) {
           callsMap.set(key, {
             userId,
@@ -76,7 +78,7 @@ const AdminReports: React.FC = () => {
             totalCalls: 0
           });
         }
-        
+
         const entry = callsMap.get(key);
         entry.uniqueLeads.add(leadId);
         entry.totalCalls++;
@@ -84,7 +86,7 @@ const AdminReports: React.FC = () => {
 
       // Convert to array and aggregate by employee
       const employeeCallsMap = new Map();
-      
+
       callsMap.forEach(entry => {
         if (!employeeCallsMap.has(entry.userId)) {
           employeeCallsMap.set(entry.userId, {
@@ -94,7 +96,7 @@ const AdminReports: React.FC = () => {
             daysActive: 0
           });
         }
-        
+
         const empEntry = employeeCallsMap.get(entry.userId);
         empEntry.totalUniqueCalls += entry.uniqueLeads.size;
         empEntry.totalCallsCount += entry.totalCalls;
@@ -135,15 +137,15 @@ const AdminReports: React.FC = () => {
 
       // Process activity log data to get leads assigned to employees
       const employeeLeadsMap = new Map();
-      
+
       for (const log of data) {
         try {
-          const eventData = typeof log.event_data === 'string' 
-            ? JSON.parse(log.event_data) 
+          const eventData = typeof log.event_data === 'string'
+            ? JSON.parse(log.event_data)
             : log.event_data;
-          
+
           const assignedTo = eventData?.assigned_to;
-          
+
           if (assignedTo) {
             // Fetch employee name
             const { data: profileData } = await supabase
@@ -151,9 +153,9 @@ const AdminReports: React.FC = () => {
               .select('name')
               .eq('id', assignedTo)
               .single();
-            
+
             const employeeName = profileData?.name || 'Unknown Employee';
-            
+
             if (!employeeLeadsMap.has(assignedTo)) {
               employeeLeadsMap.set(assignedTo, {
                 employeeName,
@@ -161,7 +163,7 @@ const AdminReports: React.FC = () => {
                 totalAssignments: 0
               });
             }
-            
+
             const entry = employeeLeadsMap.get(assignedTo);
             entry.leadsAssigned.add(log.target_id);
             entry.totalAssignments++;
@@ -209,11 +211,11 @@ const AdminReports: React.FC = () => {
 
       // Process data to get unique leads that received lists
       const listSentMap = new Map();
-      
+
       data.forEach(chat => {
         const leadId = chat.lead_id;
         const leadData = chat.leads;
-        
+
         if (!listSentMap.has(leadId)) {
           listSentMap.set(leadId, {
             leadName: leadData?.name || 'Unknown Lead',
@@ -223,10 +225,10 @@ const AdminReports: React.FC = () => {
             lastListSent: chat.created_at
           });
         }
-        
+
         const entry = listSentMap.get(leadId);
         entry.listSentCount++;
-        
+
         // Keep track of the most recent list sent date
         if (new Date(chat.created_at) > new Date(entry.lastListSent)) {
           entry.lastListSent = chat.created_at;
@@ -258,7 +260,7 @@ const AdminReports: React.FC = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
           <div className="flex items-center space-x-3">
-            <button 
+            <button
               onClick={exportReport}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium flex items-center space-x-2"
             >
@@ -324,7 +326,7 @@ const AdminReports: React.FC = () => {
               <UserCheck className="w-6 h-6 text-blue-600 mr-3" />
               <h2 className="text-xl font-semibold text-gray-900">Employee Calls Report</h2>
             </div>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
@@ -372,7 +374,7 @@ const AdminReports: React.FC = () => {
               <Users className="w-6 h-6 text-green-600 mr-3" />
               <h2 className="text-xl font-semibold text-gray-900">Employee Leads Handled Report</h2>
             </div>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
@@ -414,7 +416,7 @@ const AdminReports: React.FC = () => {
               <TrendingUp className="w-6 h-6 text-purple-600 mr-3" />
               <h2 className="text-xl font-semibold text-gray-900">List Sent Report</h2>
             </div>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
