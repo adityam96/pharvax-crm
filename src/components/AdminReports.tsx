@@ -125,7 +125,7 @@ const AdminReports: React.FC = () => {
             event_type
           `)
           .eq('target', 'LEADS')
-          .eq('event_type', 'LEAD_ASSIGNED')
+          .in('event_type', ['LEAD_ASSIGNED', 'LEAD_REASSIGNED'])
           .gte('created_at', `${dateRange.startDate}T00:00:00`)
           .lte('created_at', `${dateRange.endDate}T23:59:59`)
       );
@@ -146,6 +146,10 @@ const AdminReports: React.FC = () => {
 
           const assignedTo = eventData?.assigned_to;
 
+          console.log('[Report 2] Processing log entry:', log);
+          console.log('[Report 2] Parsed event data:', eventData);
+          console.log('[Report 2] Assigned to userId:', assignedTo);
+
           if (assignedTo) {
             // Fetch employee name
             const { data: profileData } = await supabase
@@ -154,6 +158,7 @@ const AdminReports: React.FC = () => {
               .eq('id', assignedTo)
               .single();
 
+            console.log('[Report 2] Profile data for userId', assignedTo, ':', profileData);
             const employeeName = profileData?.name || 'Unknown Employee';
 
             if (!employeeLeadsMap.has(assignedTo)) {
