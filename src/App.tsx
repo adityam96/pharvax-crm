@@ -60,9 +60,8 @@ function AppContent() {
 // Dashboard Router Component
 function DashboardRouter({ user, userProfile }: { user: any, userProfile: any }) {
   // Determine user type based on profile or email
-  const isAdmin = (userProfile?.role === 'admin' ||
-    user.email?.includes('admin') ||
-    user.email === 'admin@pharvax.com');
+  while (!userProfile) true; // Wait until userProfile is loaded
+  const isAdmin = userProfile?.role === 'admin';
 
   const userData = {
     email: user.email,
