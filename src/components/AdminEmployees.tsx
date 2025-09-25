@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { Search, Filter, Edit, Trash2, ChevronDown, X, User, Mail, Phone, Calendar, UserCheck, TrendingUp, FileText } from 'lucide-react';
-import { getAllEmployees, supabase, logSupabaseCall, getCallsMade } from '../lib/supabase';
+import { getAllEmployees, supabase, logSupabaseCall } from '../lib/supabase';
 import { userCache } from '../lib/userCache';
 
 const AdminEmployees: React.FC = () => {
@@ -290,6 +290,127 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
   const [formData, setFormData] = useState({
     ...employee
   });
+  const [leadInteractions, setLeadInteractions] = useState([]);
+  const [interactionsLoading, setInteractionsLoading] = useState(false);
+
+  // Fetch lead interactions when modal opens
+  useEffect(() => {
+    if (employee.user_id) {
+      fetchLeadInteractions(employee.user_id);
+    }
+  }, [employee.user_id]);
+
+  const fetchLeadInteractions = async (userId) => {
+    try {
+      setInteractionsLoading(true);
+
+      // Fetch chats for this employee
+      const { data: chats, error: chatsError } = await supabase
+        .from('chats')
+        .select(`
+          *,
+          lead:leads(id, name, company, status),
+          user_profile:user_profiles!user_id(name)
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (chatsError) {
+        console.error('Error fetching chats:', chatsError);
+        return;
+      }
+
+      // Fetch followups for this employee
+      const { data: followups, error: followupsError } = await supabase
+        .from('followups')
+        .select(`
+          *,
+          lead:leads(id, name, company, status),
+          user_profile:user_profiles!user_id(name)
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (followupsError) {
+        console.error('Error fetching followups:', followupsError);
+        return;
+      }
+
+      // Combine and format interactions
+      const interactions = [];
+
+      // Add chats as interactions
+      if (chats) {
+        chats.forEach(chat => {
+          interactions.push({
+            id: `chat-${chat.id}`,
+            type: 'call',
+            leadName: chat.lead?.name || 'Unknown Lead',
+            company: chat.lead?.company || 'Unknown Company',
+            status: chat.lead?.status || 'Unknown',
+            lastContact: new Date(chat.created_at).toLocaleDateString(),
+            callsMade: 1, // Each chat represents one call
+            notes: chat.mom || 'No notes available',
+            callStatus: getCallTitle(chat.call_status),
+            date: new Date(chat.created_at)
+          });
+        });
+      }
+
+      // Add followups as interactions
+      if (followups) {
+        followups.forEach(followup => {
+          interactions.push({
+            id: `followup-${followup.id}`,
+            type: 'followup',
+            leadName: followup.lead?.name || 'Unknown Lead',
+            company: followup.lead?.company || 'Unknown Company',
+            status: followup.lead?.status || 'Unknown',
+            lastContact: new Date(followup.follow_up_date).toLocaleDateString(),
+            callsMade: 0,
+            notes: followup.notes || 'No notes available',
+            followupDate: followup.follow_up_date,
+            followupStatus: followup.status,
+            date: new Date(followup.created_at)
+          });
+        });
+      }
+
+      // Sort by date (newest first) and take top 5
+      interactions.sort((a, b) => b.date.getTime() - a.date.getTime());
+      setLeadInteractions(interactions.slice(0, 5));
+
+    } catch (error) {
+      console.error('Error fetching lead interactions:', error);
+    } finally {
+      setInteractionsLoading(false);
+    }
+  };
+
+  const getCallTitle = (callStatus) => {
+    switch (callStatus) {
+      case 'list-sent':
+        return 'List Sent';
+      case 'follow-up-scheduled':
+        return 'Follow-up Call';
+      case 'no-answer':
+        return 'No Answer';
+      case 'denied':
+        return 'Call Denied';
+      case 'converted':
+        return 'Successful Conversion';
+      case 'interested':
+        return 'Interested Contact';
+      case 'not-interested':
+        return 'Not Interested';
+      case 'callback-requested':
+        return 'Callback Requested';
+      default:
+        return 'Call Made';
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -299,9 +420,6 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
-
-  // Sample lead interactions for the employee
-  const leadInteractions = [];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -443,32 +561,54 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
             {/* Lead Interactions */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Lead Interactions</h3>
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {leadInteractions.map((interaction) => (
-                  <div key={interaction.id} className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h4 className="font-medium text-gray-900">{interaction.leadName}</h4>
-                        <p className="text-sm text-blue-600">{interaction.company}</p>
-                      </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${interaction.status === 'Open' ? 'bg-green-100 text-green-800' :
-                        interaction.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
+              {interactionsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                  <span className="text-gray-600">Loading interactions...</span>
+                </div>
+              ) : leadInteractions.length > 0 ? (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {leadInteractions.map((interaction) => (
+                    <div key={interaction.id} className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-medium text-gray-900">{interaction.leadName}</h4>
+                          <p className="text-sm text-blue-600">{interaction.company}</p>
+                        </div>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          interaction.status === 'Open' ? 'bg-green-100 text-green-800' :
+                          interaction.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
                           'bg-gray-100 text-gray-800'
                         }`}>
-                        {interaction.status}
-                      </span>
+                          {interaction.status}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
+                        <span>Date: {interaction.lastContact}</span>
+                        {interaction.type === 'call' && (
+                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                            {interaction.callStatus}
+                          </span>
+                        )}
+                        {interaction.type === 'followup' && (
+                          <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">
+                            Follow-up: {interaction.followupStatus}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <FileText className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-gray-700">{interaction.notes}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
-                      <span>Last Contact: {interaction.lastContact}</span>
-                      <span>Calls: {interaction.callsMade}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <FileText className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-gray-700">{interaction.notes}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FileText className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-600">No recent lead interactions found.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
