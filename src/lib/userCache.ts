@@ -5,7 +5,7 @@ interface CachedUserData {
   timestamp: number;
 }
 
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
+const CACHE_DURATION = 1; // 10 minutes in milliseconds
 const USER_CACHE_KEY = 'pharvax_user_cache';
 const PROFILE_CACHE_KEY = 'pharvax_profile_cache';
 
