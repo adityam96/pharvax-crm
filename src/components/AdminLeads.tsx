@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Filter, Edit, Trash2, ChevronDown, X, User, Mail, Phone, Calendar, UserCheck, TrendingUp, FileText, MessageSquare, Plus, Save, Send } from 'lucide-react';
+import { Search, Filter, CreditCard as Edit, Trash2, ChevronDown, X, User, Mail, Phone, Calendar, UserCheck, TrendingUp, FileText, MessageSquare, Plus, Save, Send } from 'lucide-react';
 import { getAllLeads, supabase, logSupabaseCall, getChatAndFollowUps, getAdminNotes, getAllNotes, getUserProfile } from '../lib/supabase';
 import { userCache } from '../lib/userCache';
 import { useAuth } from '../contexts/AuthContext';
