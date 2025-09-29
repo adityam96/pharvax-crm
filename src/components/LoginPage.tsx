@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Building2, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const LoginPage: React.FC = () => {
@@ -119,6 +120,16 @@ const LoginPage: React.FC = () => {
               )}
             </button>
           </form>
+
+          {/* Forgot Password Link */}
+          <div className="mt-4 text-center">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-green-600 hover:text-green-700 transition-colors duration-200"
+            >
+              Forgot your password?
+            </Link>
+          </div>
 
           {/* Demo Information */}
           {!isConfigured && (

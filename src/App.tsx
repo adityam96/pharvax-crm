@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
 import SignUpPage from './components/SignUpPage';
+import ForgotPasswordPage from './components/ForgotPasswordPage';
+import ResetPasswordPage from './components/ResetPasswordPage';
 import EmployeeDashboard from './components/EmployeeDashboard';
 import AdminDashboard from './components/AdminDashboard';
 import InactiveUserPage from './components/InactiveUserPage';
@@ -33,6 +35,8 @@ function AppContent() {
       <Routes>
         <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/dashboard" />} />
         <Route path="/signup" element={!user ? <SignUpPage /> : <Navigate to="/dashboard" />} />
+        <Route path="/forgot-password" element={!user ? <ForgotPasswordPage /> : <Navigate to="/dashboard" />} />
+        <Route path="/reset-password" element={!user ? <ResetPasswordPage /> : <Navigate to="/dashboard" />} />
         <Route
           path="/dashboard"
           element={
