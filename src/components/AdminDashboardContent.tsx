@@ -249,8 +249,8 @@ const CSVImportModal = ({ onClose, onImportComplete }) => {
   };
 
   const handleImport = async () => {
-    if (!columnMapping.name || !columnMapping.email || !columnMapping.phone) {
-      alert('Please map at least Name, Email, and Phone columns');
+    if (!columnMapping.phone) {
+      alert('Please map at least the Phone column');
       return;
     }
 
@@ -263,18 +263,19 @@ const CSVImportModal = ({ onClose, onImportComplete }) => {
 
         try {
           const leadData = {
-            name: row[columnMapping.name] || '',
+            name: row[columnMapping.name] || 'Unknown',
             email: row[columnMapping.email] || '',
             phone: row[columnMapping.phone] || '',
             company: row[columnMapping.company] || '',
             establishment_type: row[columnMapping.establishment_type] || '',
+            area: row[columnMapping.area] || '',
             status: 'Open'
           };
 
           // Validate required fields
-          if (!leadData.name || !leadData.email || !leadData.phone) {
+          if (!leadData.phone) {
             results.failed++;
-            results.errors.push(`Row ${i + 2}: Missing required fields (name, email, or phone)`);
+            results.errors.push(`Row ${i + 2}: Missing required field (phone)`);
             continue;
           }
 
@@ -363,9 +364,10 @@ const CSVImportModal = ({ onClose, onImportComplete }) => {
                 <h4 className="font-medium text-blue-900 mb-2">CSV Format Requirements:</h4>
                 <ul className="text-sm text-blue-800 space-y-1">
                   <li>• First row should contain column headers</li>
-                  <li>• Required columns: Name, Email, Phone</li>
-                  <li>• Optional columns: Company, Establishment Type</li>
-                  <li>• Example: Name, Email, Phone, Company, Type</li>
+                  <li>• Required columns: Phone</li>
+                  <li>• Optional columns: Name, Email, Company, Establishment Type, Area</li>
+                  <li>• Example: Name, Email, Phone, Company, Type, Area</li>
+                  <li>• Note: If Name is empty, 'Unknown' will be used</li>
                 </ul>
               </div>
             </div>
@@ -382,10 +384,11 @@ const CSVImportModal = ({ onClose, onImportComplete }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[
                   { key: 'name', label: 'Name *', required: true },
-                  { key: 'email', label: 'Email *', required: true },
+                  { key: 'email', label: 'Email', required: false },
                   { key: 'phone', label: 'Phone *', required: true },
                   { key: 'company', label: 'Company', required: false },
-                  { key: 'establishment_type', label: 'Establishment Type', required: false }
+                  { key: 'establishment_type', label: 'Establishment Type', required: false },
+                  { key: 'area', label: 'Area', required: false }
                 ].map((field) => (
                   <div key={field.key}>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -422,6 +425,7 @@ const CSVImportModal = ({ onClose, onImportComplete }) => {
                           <th className="px-3 py-2 text-left text-sm font-medium text-gray-900">Phone</th>
                           <th className="px-3 py-2 text-left text-sm font-medium text-gray-900">Company</th>
                           <th className="px-3 py-2 text-left text-sm font-medium text-gray-900">Type</th>
+                          <th className="px-3 py-2 text-left text-sm font-medium text-gray-900">Area</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
@@ -432,6 +436,7 @@ const CSVImportModal = ({ onClose, onImportComplete }) => {
                             <td className="px-3 py-2 text-sm text-gray-900">{row[columnMapping.phone] || '-'}</td>
                             <td className="px-3 py-2 text-sm text-gray-900">{row[columnMapping.company] || '-'}</td>
                             <td className="px-3 py-2 text-sm text-gray-900">{row[columnMapping.establishment_type] || '-'}</td>
+                            <td className="px-3 py-2 text-sm text-gray-900">{row[columnMapping.area] || '-'}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -449,7 +454,7 @@ const CSVImportModal = ({ onClose, onImportComplete }) => {
                 </button>
                 <button
                   onClick={handleImport}
-                  disabled={importing || !columnMapping.name || !columnMapping.email || !columnMapping.phone}
+                  disabled={importing || !columnMapping.phone}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-2 px-4 rounded-md transition-colors duration-200 font-medium flex items-center justify-center"
                 >
                   {importing ? (
