@@ -533,7 +533,7 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
 
           {/* Right Side - Stats and Lead Interactions */}
           <div className="w-1/2 p-6">
-            {/* Performance Stats */}
+            {/* Performance Stats
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Stats</h3>
               <div className="grid grid-cols-2 gap-4">
@@ -547,7 +547,7 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Lead Interactions */}
             <div>
@@ -567,8 +567,8 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
                           <p className="text-sm text-blue-600">{interaction.company}</p>
                         </div>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${interaction.status === 'Open' ? 'bg-green-100 text-green-800' :
-                            interaction.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-gray-100 text-gray-800'
+                          interaction.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
                           }`}>
                           {interaction.status}
                         </span>

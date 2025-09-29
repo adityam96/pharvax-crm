@@ -254,6 +254,23 @@ export const getChatAndFollowUpsForEmployee = async (employeeUserId: string) => 
   }
 }
 
+export const getAdminNotes = async (leadId: string) => {
+  try {
+    const { data, error } = await logSupabaseCall('getAllNotes', () => supabase
+      .from('lead_notes')
+      .select(`
+          *,
+          created_by_profile:user_profiles!created_by(name)
+        `)
+      .eq('lead_id', leadId)
+      .eq('level', 'ADMIN')
+      .order('level', { ascending: false }))
+    return { data, error }
+  } catch (error) {
+    return { user: null, error }
+  }
+}
+
 export const getAllNotes = async (leadId: string) => {
   try {
     const { data, error } = await logSupabaseCall('getAllNotes', () => supabase

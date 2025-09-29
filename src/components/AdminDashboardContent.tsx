@@ -272,10 +272,9 @@ const CSVImportModal = ({ onClose, onImportComplete }) => {
             status: 'Open'
           };
 
-          // Validate required fields
           if (!leadData.phone) {
             results.failed++;
-            results.errors.push(`Row ${i + 2}: Missing required field (phone)`);
+            results.errors.push(`Row ${i + 2}: Missing required fields (phone)`);
             continue;
           }
 

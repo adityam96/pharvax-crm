@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useEffect } from 'react';
 import { Search, Filter, Download, Calendar, ChevronDown, Upload, Plus, X, Mail, Phone, Building, User, Edit, UserCheck, FileText, AlertCircle, CheckCircle, Users, MessageSquare, Send } from 'lucide-react';
-import { supabase, getAllLeads, getAllEmployees, getChatAndFollowUps, getUserProfile, getAllNotes } from '../lib/supabase';
+import { supabase, getAllLeads, getAllEmployees, getChatAndFollowUps, getUserProfile, getAllNotes, getAdminNotes } from '../lib/supabase';
 import { userCache } from '../lib/userCache';
 
 const AdminLeads: React.FC = () => {
@@ -12,6 +12,7 @@ const AdminLeads: React.FC = () => {
   const [sourceFilter, setSourceFilter] = useState('All');
   const [dateRange, setDateRange] = useState('01/01/2024 - 03/31/2024');
   const [selectedLead, setSelectedLead] = useState(null);
+  const [selectedLeadForAdminNotes, setSelectedLeadForAdminNotes] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingLead, setEditingLead] = useState(null);
@@ -28,7 +29,9 @@ const AdminLeads: React.FC = () => {
     sources: ['All']
   });
   const [adminNotes, setAdminNotes] = useState([]);
+  const [adminOnlyNotes, setAdminOnlyNotes] = useState([]);
   const [notesLoading, setNotesLoading] = useState(false);
+  const [adminOnlyNotesLoading, setAdminOnlyNotesLoading] = useState(false);
   const [newNote, setNewNote] = useState('');
   const [noteLevel, setNoteLevel] = useState('info');
   const [addingNote, setAddingNote] = useState(false);
@@ -39,12 +42,19 @@ const AdminLeads: React.FC = () => {
     fetchEmployees();
   }, []);
 
-  // Fetch admin notes when a lead is selected
+  // Fetch all notes when a lead is selected
   useEffect(() => {
     if (selectedLead) {
       fetchAdminNotes(selectedLead.id);
     }
   }, [selectedLead]);
+
+  // Fetch admin pnly notes when a lead is selected
+  useEffect(() => {
+    if (selectedLeadForAdminNotes) {
+      fetchAdminOnlyNotes(selectedLeadForAdminNotes.id);
+    }
+  }, [selectedLeadForAdminNotes]);
 
   const fetchLeads = async () => {
     try {
@@ -81,7 +91,10 @@ const AdminLeads: React.FC = () => {
       setAllLeads(transformedData);
 
       // Generate filter options from the retrieved leads
-      const assignedToOptions = ['All', ...new Set(transformedData.map(lead => lead.assignedTo).filter(Boolean))];
+      // const assignedToOptions = ['All', ...new Set(transformedData.map(lead => lead.assignedTo).filter(Boolean))];
+      // Build assigned-to options: All, Unassigned, unique assignee names, and "Assigned to any"
+      const assignedNames = Array.from(new Set(transformedData.map(lead => lead.assignedTo || 'Unassigned')));
+      const assignedToOptions = ['All', 'Assigned to any', 'Unassigned', ...assignedNames.filter(n => n !== 'Unassigned')];
       const establishmentTypeOptions = ['All', ...new Set(transformedData.map(lead => lead.establishmentType).filter(Boolean))];
       const statusOptions = ['All', ...new Set(transformedData.map(lead => lead.status).filter(Boolean))];
       const sourceOptions = ['All', ...new Set(transformedData.map(lead => lead.source).filter(Boolean))];
@@ -132,6 +145,26 @@ const AdminLeads: React.FC = () => {
       console.error('Error fetching admin notes:', error);
     } finally {
       setNotesLoading(false);
+    }
+  };
+
+  const fetchAdminOnlyNotes = async (leadId: string) => {
+    try {
+      setAdminOnlyNotesLoading(true);
+
+      const { data: notes, error } = await getAdminNotes(leadId);
+
+      console.log('Fetched admin notes:', notes);
+      if (error) {
+        console.error('Error fetching admin notes:', error);
+        return;
+      }
+
+      setAdminOnlyNotes(notes || []);
+    } catch (error) {
+      console.error('Error fetching admin only notes:', error);
+    } finally {
+      setAdminOnlyNotesLoading(false);
     }
   };
 
@@ -282,6 +315,10 @@ const AdminLeads: React.FC = () => {
     setSelectedLead(lead);
   };
 
+  const handleAdminNotesClick = (lead) => {
+    setSelectedLeadForAdminNotes(lead);
+  };
+
   const closeModal = () => {
     setSelectedLead(null);
     setAdminNotes([]);
@@ -405,22 +442,6 @@ const AdminLeads: React.FC = () => {
         <div className="bg-white border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-900">Leads Management</h1>
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium flex items-center space-x-2"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Lead</span>
-              </button>
-              <button
-                onClick={() => setShowImportModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium flex items-center space-x-2"
-              >
-                <Upload className="w-4 h-4" />
-                <span>Import CSV</span>
-              </button>
-            </div>
           </div>
         </div>
 
@@ -546,38 +567,51 @@ const AdminLeads: React.FC = () => {
           {/* Leads Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredLeads.map((lead) => (
-              <div
-                key={lead.id}
-                className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
-                onClick={() => handleCardClick(lead)}
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-semibold text-gray-900 text-lg">{lead.company}</h3>
-                    <p className="text-sm text-blue-600 font-medium mb-1">{lead.establishmentType}</p>
-                    <p className="text-sm text-gray-700 mb-1">POC: {lead.name}</p>
+              <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                <div
+                  key={lead.id}
+                  className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
+                  onClick={() => handleCardClick(lead)}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="font-semibold text-gray-900 text-lg">{lead.company}</h3>
+                      <p className="text-sm text-blue-600 font-medium mb-1">{lead.establishmentType}</p>
+                      <p className="text-sm text-gray-700 mb-1">POC: {lead.name}</p>
+                    </div>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                        lead.status
+                      )}`}
+                    >
+                      {lead.status}
+                    </span>
                   </div>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                      lead.status
-                    )}`}
-                  >
-                    {lead.status}
-                  </span>
-                </div>
 
-                <div className="space-y-2 mb-3">
-                  <div className="flex items-center space-x-2 text-gray-600">
-                    <Mail className="w-4 h-4" />
-                    <span className="text-sm">{lead.email}</span>
+                  <div className="space-y-2 mb-3">
+                    <div className="flex items-center space-x-2 text-gray-600">
+                      <Mail className="w-4 h-4" />
+                      <span className="text-sm">{lead.email}</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-gray-600">
+                      <Phone className="w-4 h-4" />
+                      <span className="text-sm">{lead.phone}</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-gray-600">
+                      <User className="w-4 h-4" />
+                      <span className="text-sm">Assigned to: {lead.assignedTo}</span>
+                    </div>
                   </div>
+                </div>
+                {/* Sticky (attached) full-width admin notes footer */}
+                <div
+                  key={'admin-note' + lead.id}
+                  className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
+                  onClick={() => handleAdminNotesClick(lead)}
+                >
                   <div className="flex items-center space-x-2 text-gray-600">
-                    <Phone className="w-4 h-4" />
-                    <span className="text-sm">{lead.phone}</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-gray-600">
-                    <User className="w-4 h-4" />
-                    <span className="text-sm">Assigned to: {lead.assignedTo}</span>
+                    <MessageSquare className="w-4 h-4" />
+                    <span className="text-sm font-medium">Open admin notes</span>
                   </div>
                 </div>
               </div>
