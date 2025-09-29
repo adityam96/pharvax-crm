@@ -35,6 +35,7 @@ const AdminLeads: React.FC = () => {
   const [newNote, setNewNote] = useState('');
   const [noteLevel, setNoteLevel] = useState('info');
   const [addingNote, setAddingNote] = useState(false);
+  const [adminNotesDialogPosition, setAdminNotesDialogPosition] = useState({ top: 0, left: 0 });
 
   // Fetch data from database
   useEffect(() => {
@@ -277,7 +278,7 @@ const AdminLeads: React.FC = () => {
       lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.company.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesAssignedTo = assignedToFilter === 'All' || lead.assignedTo === assignedToFilter;
+    const matchesAssignedTo = assignedToFilter === 'All' || lead.assignedTo === assignedToFilter || (assignedToFilter === 'Assigned to any' && lead.assignedTo !== 'Unassigned');
     const matchesEstablishmentType = establishmentTypeFilter === 'All' || lead.establishmentType === establishmentTypeFilter;
     const matchesStatus = statusFilter === 'All' || lead.status === statusFilter;
     const matchesSource = sourceFilter === 'All' || lead.source === sourceFilter;
@@ -316,7 +317,15 @@ const AdminLeads: React.FC = () => {
   };
 
   const handleAdminNotesClick = (lead) => {
+    // Get the position of the click event to position the dialog
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    setAdminNotesDialogPosition({ top: rect.bottom + window.scrollY, left: rect.left + window.scrollX });
     setSelectedLeadForAdminNotes(lead);
+  };
+
+  const handleAdminNotesCloseClick = () => {
+    setSelectedLeadForAdminNotes(null);
+    setAdminOnlyNotes([]);
   };
 
   const closeModal = () => {
@@ -607,7 +616,7 @@ const AdminLeads: React.FC = () => {
                 <div
                   key={'admin-note' + lead.id}
                   className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
-                  onClick={() => handleAdminNotesClick(lead)}
+                  onClick={() => handleAdminNotesClick(lead, event)}
                 >
                   <div className="flex items-center space-x-2 text-gray-600">
                     <MessageSquare className="w-4 h-4" />
@@ -628,6 +637,60 @@ const AdminLeads: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Admin Notes Dialog */}
+        {selectedLeadForAdminNotes && (
+          <div
+            className="admin-notes-dialog fixed bg-white border border-gray-200 rounded-lg shadow-lg p-4 w-80 max-h-96 overflow-y-auto z-50"
+            style={{
+              top: `${adminNotesDialogPosition.top}px`,
+              left: `${adminNotesDialogPosition.left}px`,
+            }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h5 className="font-semibold text-gray-900">Admin Only Notes</h5>
+              <button
+                onClick={() => handleAdminNotesCloseClick()}
+                className="p-1 hover:bg-gray-100 rounded transition-colors duration-200"
+              >
+                <X className="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
+
+            {adminOnlyNotes.length > 0 ? (
+              <div className="space-y-3">
+                {adminOnlyNotes.map((note) => (
+                  <div
+                    key={note.id}
+                    className={`rounded-lg p-3 border ${getNoteColor(note.level)}`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium text-gray-900">
+                          {note.created_by_profile?.name || 'Admin'}
+                        </span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getLevelBadgeColor(note.level)}`}>
+                          ADMIN
+                        </span>
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        {new Date(note.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className={`text-sm ${getNoteTextColor(note.level)}`}>
+                      {note.notes}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-gray-600 text-sm">No admin notes found for this lead.</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Lead Details Modal */}
         {selectedLead && (
@@ -694,6 +757,33 @@ const AdminLeads: React.FC = () => {
                         <p className="text-gray-900">{selectedLead.phone}</p>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+
+                {/* Action Buttons */}
+                <div className="flex space-x-3 pt-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-lg font-semibold text-gray-900">Actions</h4>
+                  </div>
+                  <button
+                    onClick={() => handleEditLead(selectedLead)}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors duration-200 font-medium flex items-center justify-center space-x-2"
+                  >
+                    <Edit className="w-4 h-4" />
+                    <span>Edit Lead</span>
+                  </button>
+                  <div className="flex-1">
+                    <select
+                      onChange={(e) => handleReassignLead(selectedLead.id, e.target.value)}
+                      className="w-full py-2 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Reassign to...</option>
+                      {employees.filter(emp => emp.id !== selectedLead.assignedToId).map(employee => (
+                        <option key={employee.id} value={employee.id}>{employee.name}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
@@ -812,28 +902,6 @@ const AdminLeads: React.FC = () => {
                   <RecentActivitySection leadId={selectedLead.id} />
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex space-x-3 pt-4 border-t border-gray-200">
-                  <button
-                    onClick={() => handleEditLead(selectedLead)}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors duration-200 font-medium flex items-center justify-center space-x-2"
-                  >
-                    <Edit className="w-4 h-4" />
-                    <span>Edit Lead</span>
-                  </button>
-                  <div className="flex-1">
-                    <select
-                      onChange={(e) => handleReassignLead(selectedLead.id, e.target.value)}
-                      className="w-full py-2 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      defaultValue=""
-                    >
-                      <option value="" disabled>Reassign to...</option>
-                      {employees.filter(emp => emp.id !== selectedLead.assignedToId).map(employee => (
-                        <option key={employee.id} value={employee.id}>{employee.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
