@@ -121,7 +121,7 @@ const LoginPage: React.FC = () => {
             </button>
           </form>
 
-          {/* Forgot Password Link */}
+          {/* Forgot Password Link
           <div className="mt-4 text-center">
             <Link
               to="/forgot-password"
@@ -129,7 +129,7 @@ const LoginPage: React.FC = () => {
             >
               Forgot your password?
             </Link>
-          </div>
+          </div> */}
 
           {/* Demo Information */}
           {!isConfigured && (
