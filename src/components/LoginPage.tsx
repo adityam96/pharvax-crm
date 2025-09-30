@@ -11,12 +11,15 @@ const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, isConfigured } = useAuth();
 
+  sessionStorage.clear(); // Clear session storage on component load
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
+      sessionStorage.clear(); // Clear session storage on new login attempt
       const { error } = await signIn(email, password);
 
       if (error) {

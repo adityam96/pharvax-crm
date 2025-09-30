@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Building2, Mail, Lock, Eye, EyeOff, AlertCircle, User, MapPin, Briefcase } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 
 const SignUpPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -90,6 +91,7 @@ const SignUpPage: React.FC = () => {
           phone: ''
         });
       }
+      supabase.auth.signOut();
     } catch (err) {
       console.error('Signup error:', err)
       setError('An unexpected error occurred');
