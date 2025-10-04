@@ -369,56 +369,75 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
       </div>
 
       {/* Desktop Quick Filters */}
-      <div className="hidden lg:block bg-white border-b border-gray-200 px-6 py-3">
-        <div className="flex items-center space-x-1">
-          <Filter className="w-4 h-4 text-gray-500 mr-2" />
-          <span className="text-sm font-medium text-gray-700 mr-3">Filter by status:</span>
-          {Object.entries(statusCounts).map(([status, count]) => (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
-              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${statusFilter === status
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-            >
-              {status} ({count})
-            </button>
-          ))}
+      <div className="hidden lg:block bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center space-x-2">
+          <Filter className="w-5 h-5 text-gray-500" />
+          <span className="text-sm font-semibold text-gray-900 mr-4">Filters:</span>
+        </div>
+        <div className="mt-3 flex items-start space-x-6">
+          {/* Status Filter */}
+          <div className="flex flex-col space-y-2">
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              Status
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(statusCounts).map(([status, count]) => (
+                <button
+                  key={status}
+                  onClick={() => setStatusFilter(status)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    statusFilter === status
+                      ? 'bg-green-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow'
+                  }`}
+                >
+                  {status} <span className="opacity-75">({count})</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Mobile Filters Button */}
-      <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-2">
+      <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className="w-full flex items-center justify-between px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
         >
-          <div className="flex items-center space-x-2">
-            <Filter className="w-4 h-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">
-              Filter by status: {statusFilter}
-            </span>
+          <div className="flex items-center space-x-3">
+            <Filter className="w-5 h-5 text-gray-600" />
+            <div className="flex flex-col items-start">
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                Status
+              </span>
+              <span className="text-sm font-semibold text-gray-900">
+                {statusFilter}
+              </span>
+            </div>
           </div>
-          <span className="text-gray-500">{showFilters ? '▲' : '▼'}</span>
+          <span className="text-gray-500 text-lg">{showFilters ? '▲' : '▼'}</span>
         </button>
         {showFilters && (
-          <div className="mt-2 flex flex-wrap gap-2">
-            {Object.entries(statusCounts).map(([status, count]) => (
-              <button
-                key={status}
-                onClick={() => {
-                  setStatusFilter(status);
-                  setShowFilters(false);
-                }}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${statusFilter === status
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(statusCounts).map(([status, count]) => (
+                <button
+                  key={status}
+                  onClick={() => {
+                    setStatusFilter(status);
+                    setShowFilters(false);
+                  }}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    statusFilter === status
+                      ? 'bg-green-600 text-white shadow-md'
+                      : 'bg-white text-gray-700 hover:bg-gray-100 hover:shadow border border-gray-200'
                   }`}
-              >
-                {status} ({count})
-              </button>
-            ))}
+                >
+                  {status} <span className="opacity-75">({count})</span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>
