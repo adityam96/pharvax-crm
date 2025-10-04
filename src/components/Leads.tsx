@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect } from 'react';
-import { UserCheck, Search, Filter, X, Mail, Phone, Building, User, Calendar, Plus, Save, MessageSquare, Send } from 'lucide-react';
+import { UserCheck, Search, Filter, X, Mail, Phone, Building, User, Calendar, Plus, Save, MessageSquare, Send, Menu } from 'lucide-react';
 import { supabase, getLeadsAssignedToCurrentUser, getUserProfile, getChatAndFollowUps, getEmployeeNotes } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { userCache } from '../lib/userCache';
@@ -9,9 +9,10 @@ import { getCallTitle } from '../lib/utils';
 
 interface LeadsProps {
   onLogCall: (lead: any) => void;
+  onMenuClick?: () => void;
 }
 
-const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
+const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('All');
   const [selectedLead, setSelectedLead] = React.useState(null);
@@ -25,6 +26,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
   const [noteLevel, setNoteLevel] = React.useState('info');
   const [addingNote, setAddingNote] = React.useState(false);
   const [showAddLeadModal, setShowAddLeadModal] = React.useState(false);
+  const [showFilters, setShowFilters] = React.useState(false);
   const { userProfile, user } = useAuth();
 
   // Fetch leads from database
@@ -330,33 +332,44 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
   return (
     <div className="flex-1 bg-gray-50 min-h-screen relative">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
-          <div className="flex items-center space-x-4">
+      <div className="bg-white border-b border-gray-200 px-4 lg:px-6 py-4">
+        <div className="flex items-center justify-between mb-3 lg:mb-0">
+          <div className="flex items-center space-x-3">
+            {onMenuClick && (
+              <button
+                onClick={onMenuClick}
+                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <Menu className="w-6 h-6 text-gray-600" />
+              </button>
+            )}
+            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Leads</h1>
+          </div>
+          <div className="flex items-center space-x-2">
             <button
               onClick={() => setShowAddLeadModal(true)}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium flex items-center space-x-2"
+              className="bg-green-600 hover:bg-green-700 text-white px-3 lg:px-4 py-2 rounded-lg transition-colors duration-200 font-medium flex items-center space-x-2 text-sm lg:text-base"
             >
               <Plus className="w-4 h-4" />
-              <span>Add Lead</span>
+              <span className="hidden sm:inline">Add Lead</span>
+              <span className="sm:hidden">Add</span>
             </button>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search leads..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent w-64"
-              />
-            </div>
           </div>
+        </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search leads..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full lg:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          />
         </div>
       </div>
 
-      {/* Quick Filters */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3">
+      {/* Desktop Quick Filters */}
+      <div className="hidden lg:block bg-white border-b border-gray-200 px-6 py-3">
         <div className="flex items-center space-x-1">
           <Filter className="w-4 h-4 text-gray-500 mr-2" />
           <span className="text-sm font-medium text-gray-700 mr-3">Filter by status:</span>
@@ -375,18 +388,53 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
         </div>
       </div>
 
+      {/* Mobile Filters Button */}
+      <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-2">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="w-full flex items-center justify-between px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+        >
+          <div className="flex items-center space-x-2">
+            <Filter className="w-4 h-4 text-gray-600" />
+            <span className="text-sm font-medium text-gray-700">
+              Filter by status: {statusFilter}
+            </span>
+          </div>
+          <span className="text-gray-500">{showFilters ? '▲' : '▼'}</span>
+        </button>
+        {showFilters && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {Object.entries(statusCounts).map(([status, count]) => (
+              <button
+                key={status}
+                onClick={() => {
+                  setStatusFilter(status);
+                  setShowFilters(false);
+                }}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${statusFilter === status
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+              >
+                {status} ({count})
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Content */}
-      <div className="p-6">
+      <div className="p-4 lg:p-6">
         <div className="mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-base lg:text-lg font-semibold text-gray-900">
             Your Assigned Leads
           </h2>
-          <p className="text-sm text-gray-600">
+          <p className="text-xs lg:text-sm text-gray-600">
             Showing {filteredLeads.length} of {allLeads.length} leads
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
           {filteredLeads.map((lead) => (
             <div
               key={lead.id}
@@ -394,13 +442,15 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
               onClick={() => handleCardClick(lead)}
             >
               <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="font-semibold text-gray-900 text-lg">{lead.company}</h3>
-                  <p className="text-sm text-blue-600 font-medium mb-1">{lead.establishmentType}</p>
-                  <p className="text-sm text-gray-700 mb-1">POC: {lead.name}</p>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-gray-900 text-base lg:text-lg truncate">{lead.company}</h3>
+                  {lead.establishmentType && (
+                    <p className="text-xs lg:text-sm text-blue-600 font-medium mb-1">{lead.establishmentType}</p>
+                  )}
+                  <p className="text-xs lg:text-sm text-gray-700 mb-1">POC: {lead.name}</p>
                 </div>
                 <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                  className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ml-2 ${getStatusColor(
                     lead.status
                   )}`}
                 >
@@ -410,12 +460,12 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
 
               <div className="space-y-2">
                 <div className="flex items-center space-x-2 text-gray-600">
-                  <span className="text-sm">📧</span>
-                  <span className="text-sm">{lead.email}</span>
+                  <Mail className="w-4 h-4 flex-shrink-0" />
+                  <span className="text-xs lg:text-sm truncate">{lead.email}</span>
                 </div>
                 <div className="flex items-center space-x-2 text-gray-600">
-                  <span className="text-sm">📞</span>
-                  <span className="text-sm">{lead.phone}</span>
+                  <Phone className="w-4 h-4 flex-shrink-0" />
+                  <span className="text-xs lg:text-sm">{lead.phone}</span>
                 </div>
               </div>
             </div>

@@ -10,28 +10,45 @@ interface EmployeeDashboardProps {
 function EmployeeDashboard({ userData }: EmployeeDashboardProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedLeadForCall, setSelectedLeadForCall] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard selectedLeadForCall={selectedLeadForCall} onLeadCallLogged={() => setSelectedLeadForCall(null)} />;
+        return <Dashboard selectedLeadForCall={selectedLeadForCall} onLeadCallLogged={() => setSelectedLeadForCall(null)} onMenuClick={() => setIsSidebarOpen(true)} />;
       case 'leads':
         return <Leads onLogCall={(lead) => {
           setSelectedLeadForCall(lead);
           setActiveTab('dashboard');
-        }} />;
+        }} onMenuClick={() => setIsSidebarOpen(true)} />;
       default:
-        return <Dashboard selectedLeadForCall={selectedLeadForCall} onLeadCallLogged={() => setSelectedLeadForCall(null)} />;
+        return <Dashboard selectedLeadForCall={selectedLeadForCall} onLeadCallLogged={() => setSelectedLeadForCall(null)} onMenuClick={() => setIsSidebarOpen(true)} />;
     }
   };
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <Sidebar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
+      {/* Desktop sidebar - always visible */}
+      <div className="hidden lg:block">
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          userData={userData}
+        />
+      </div>
+
+      {/* Mobile sidebar - toggleable */}
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={(tab) => {
+          setActiveTab(tab);
+          setIsSidebarOpen(false);
+        }}
         userData={userData}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
+
       <div className="flex-1 overflow-hidden">
         {renderContent()}
       </div>

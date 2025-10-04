@@ -1,14 +1,16 @@
 import React from 'react';
-import { Home, Users, UserCheck, LogOut } from 'lucide-react';
+import { Home, Users, UserCheck, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   userData?: any;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userData }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userData, isOpen = true, onClose }) => {
   const { signOut } = useAuth();
 
   const menuItems = [
@@ -17,11 +19,33 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userData }) 
   ];
 
   return (
-    <div className="w-64 text-white h-screen flex flex-col sticky top-0"
-      style={{ backgroundColor: 'rgb(11,41,105)' }}
-    >
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && onClose && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div
+        className={`w-64 text-white h-screen flex flex-col fixed lg:sticky top-0 z-50 transition-transform duration-300 lg:translate-x-0 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        style={{ backgroundColor: 'rgb(11,41,105)' }}
+      >
       {/* Logo and Company Name */}
-      <div className="p-6 border-b border-slate-700 bg-white">
+      <div className="p-6 border-b border-slate-700 bg-white relative">
+        {/* Close button for mobile */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-lg lg:hidden"
+          >
+            <X className="w-5 h-5 text-gray-600" />
+          </button>
+        )}
         <div className="flex items-center space-x-2 mb-4">
           <img
             src="/logo.png"
@@ -74,7 +98,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userData }) 
           <span>Log Out</span>
         </button>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
