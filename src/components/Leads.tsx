@@ -4,6 +4,8 @@ import { UserCheck, Search, Filter, X, Mail, Phone, Building, User, Calendar, Pl
 import { supabase, getLeadsAssignedToCurrentUser, getUserProfile, getChatAndFollowUps, getEmployeeNotes } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { userCache } from '../lib/userCache';
+import { getCallStatusConfig } from '../lib/configDataService';
+import { getCallTitle } from '../lib/utils';
 
 interface LeadsProps {
   onLogCall: (lead: any) => void;
@@ -111,18 +113,19 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
 
       // Add chats as activities
       if (chats) {
-        chats.forEach(chat => {
-          activities.push({
+        const chatActivities = await Promise.all(
+          chats.map(async (chat: any) => ({
             id: `chat-${chat.id}`,
             type: 'call',
-            title: 'Status: ' + getCallTitle(chat.call_status),
+            title: 'Status: ' + (await getCallTitle(chat.call_status)),
             date: new Date(chat.created_at),
             notes: chat.mom,
             additionalInfo: chat.notes,
             status: chat.call_status,
             created_by: chat.created_by_profile?.name
-          });
-        });
+          }))
+        );
+        activities.push(...chatActivities);
       }
 
       // Add followups as activities
@@ -253,29 +256,6 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall }) => {
         return 'bg-blue-100 text-blue-800';
       default:
         return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getCallTitle = (callStatus: string) => {
-    switch (callStatus) {
-      case 'list-sent':
-        return 'List Sent';
-      case 'follow-up-scheduled':
-        return 'Follow-up Call';
-      case 'no-answer':
-        return 'No Answer';
-      case 'denied':
-        return 'Call Denied';
-      case 'converted':
-        return 'Successful Conversion';
-      case 'interested':
-        return 'Interested Contact';
-      case 'not-interested':
-        return 'Not Interested';
-      case 'callback-requested':
-        return 'Callback Requested';
-      default:
-        return 'Call Made';
     }
   };
 

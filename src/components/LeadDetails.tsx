@@ -75,7 +75,7 @@ const LeadDetails: React.FC<LeadDetailsProps> = ({ lead, onBack, onEdit }) => {
           <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
             Contact Information
           </h4>
-          
+
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
               <Mail className="w-5 h-5 text-gray-400" />
@@ -84,7 +84,7 @@ const LeadDetails: React.FC<LeadDetailsProps> = ({ lead, onBack, onEdit }) => {
                 <p className="text-gray-900">{lead.email}</p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <Phone className="w-5 h-5 text-gray-400" />
               <div>
@@ -100,7 +100,7 @@ const LeadDetails: React.FC<LeadDetailsProps> = ({ lead, onBack, onEdit }) => {
           <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
             Lead Information
           </h4>
-          
+
           <div className="grid grid-cols-1 gap-4">
             <div className="flex items-center space-x-3">
               <User className="w-5 h-5 text-gray-400" />
@@ -109,7 +109,7 @@ const LeadDetails: React.FC<LeadDetailsProps> = ({ lead, onBack, onEdit }) => {
                 <p className="text-gray-900">#{lead.id}</p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <Calendar className="w-5 h-5 text-gray-400" />
               <div>
@@ -122,7 +122,7 @@ const LeadDetails: React.FC<LeadDetailsProps> = ({ lead, onBack, onEdit }) => {
 
         {/* Action Buttons */}
         <div className="flex space-x-3 pt-4 border-t border-gray-200">
-          <button 
+          <button
             onClick={onEdit}
             className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors duration-200 font-medium"
           >
@@ -138,7 +138,7 @@ const LeadDetails: React.FC<LeadDetailsProps> = ({ lead, onBack, onEdit }) => {
           <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
             Recent Activity
           </h4>
-          
+
           <div className="space-y-3">
             <div className="bg-gray-50 rounded-lg p-3">
               <p className="text-sm text-gray-600 mb-1">Lead created</p>

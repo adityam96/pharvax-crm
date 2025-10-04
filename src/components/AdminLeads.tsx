@@ -1,8 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { useEffect } from 'react';
-import { Search, Filter, Download, Calendar, ChevronDown, Upload, Plus, X, Mail, Phone, Building, User, Edit, UserCheck, FileText, AlertCircle, CheckCircle, Users, MessageSquare, Send } from 'lucide-react';
+import { Search, Filter, Download, Calendar, ChevronDown, Upload, Plus, X, Mail, Phone, Building, User, Edit, UserCheck, FileText, AlertCircle, CheckCircle, Users, MessageSquare, Send, AreaChart, PlayCircle, NavigationIcon, MapIcon } from 'lucide-react';
 import { supabase, getAllLeads, getAllEmployees, getChatAndFollowUps, getUserProfile, getAllNotes, getAdminNotes } from '../lib/supabase';
 import { userCache } from '../lib/userCache';
+import { getCallStatusConfig } from '../lib/configDataService';
+import { getCallTitle } from '../lib/utils';
 
 const AdminLeads: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -86,7 +88,8 @@ const AdminLeads: React.FC = () => {
         assignedTo: lead.assigned_to_profile?.name || 'Unassigned',
         assignedToId: lead.assigned_to,
         status: lead.status,
-        lastContact: lead.last_contact?.split('T')[0] || ''
+        lastContact: lead.last_contact?.split('T')[0] || '',
+        area: lead.area || 'N/A',
       }));
 
       setAllLeads(transformedData);
@@ -313,6 +316,7 @@ const AdminLeads: React.FC = () => {
   };
 
   const handleCardClick = (lead) => {
+    console.log('Card clicked:', lead);
     setSelectedLead(lead);
   };
 
@@ -610,6 +614,10 @@ const AdminLeads: React.FC = () => {
                       <User className="w-4 h-4" />
                       <span className="text-sm">Assigned to: {lead.assignedTo}</span>
                     </div>
+                    <div className="flex items-center space-x-2 text-gray-600">
+                      <MapIcon className="w-4 h-4" />
+                      <span className="text-sm">Area: {lead.area}</span>
+                    </div>
                   </div>
                 </div>
                 {/* Sticky (attached) full-width admin notes footer */}
@@ -724,6 +732,10 @@ const AdminLeads: React.FC = () => {
                     <div className="flex items-center text-gray-700 mb-2">
                       <UserCheck className="w-4 h-4 mr-2" />
                       <span>Assigned to: {selectedLead.assignedTo}</span>
+                    </div>
+                    <div className="flex items-center text-gray-700 mb-2">
+                      <MapIcon className="w-4 h-4 mr-2" />
+                      <span>Area: {selectedLead.area}</span>
                     </div>
                   </div>
                   <span
@@ -1011,18 +1023,19 @@ const RecentActivitySection = ({ leadId }) => {
 
       // Add chats as activities
       if (chats) {
-        chats.forEach(chat => {
-          activities.push({
+        const chatActivities = await Promise.all(
+          chats.map(async (chat: any) => ({
             id: `chat-${chat.id}`,
             type: 'call',
-            title: 'Status: ' + getCallTitle(chat.call_status),
+            title: 'Status: ' + (await getCallTitle(chat.call_status)),
             date: new Date(chat.created_at),
             notes: chat.mom,
             additionalInfo: chat.notes,
             status: chat.call_status,
-            created_by: chat.created_by_profile?.name
-          });
-        });
+            created_by: chat.created_by_profile?.name,
+          }))
+        );
+        activities.push(...chatActivities);
       }
 
       // Add followups as activities
@@ -1049,29 +1062,6 @@ const RecentActivitySection = ({ leadId }) => {
       console.error('Error fetching recent activity:', error);
     } finally {
       setActivityLoading(false);
-    }
-  };
-
-  const getCallTitle = (callStatus: string) => {
-    switch (callStatus) {
-      case 'list-sent':
-        return 'List Sent';
-      case 'follow-up-scheduled':
-        return 'Follow-up Call';
-      case 'no-answer':
-        return 'No Answer';
-      case 'denied':
-        return 'Call Denied';
-      case 'converted':
-        return 'Successful Conversion';
-      case 'interested':
-        return 'Interested Contact';
-      case 'not-interested':
-        return 'Not Interested';
-      case 'callback-requested':
-        return 'Callback Requested';
-      default:
-        return 'Call Made';
     }
   };
 

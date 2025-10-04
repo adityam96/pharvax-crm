@@ -31,7 +31,7 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onLogCall }) => {
   };
 
   return (
-    <div 
+    <div
       onClick={() => onLogCall(lead)}
       className="bg-white rounded-lg border border-gray-200 p-4 mb-4 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
     >

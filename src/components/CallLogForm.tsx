@@ -3,6 +3,8 @@ import { useEffect } from 'react';
 import { Calendar, Save } from 'lucide-react';
 import { getChatAndFollowUps, supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { getCallStatusConfig } from '../lib/configDataService';
+import { getCallTitle } from '../lib/utils';
 
 interface CallLogData {
   contactName: string;
@@ -31,6 +33,7 @@ interface CallLogFormProps {
 const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
   const [recentActivity, setRecentActivity] = useState([]);
   const [activityLoading, setActivityLoading] = useState(false);
+  const [callStatuses, setCallStatuses] = useState([]);
   const { user } = useAuth();
   const [formData, setFormData] = useState<CallLogData>({
     contactName: selectedLead?.name || '',
@@ -43,6 +46,24 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
     notes: '',
     callStatus: '',
   });
+
+  useEffect(() => {
+    const fetchCallStatuses = async () => {
+      const config = await getCallStatusConfig();
+      if (config) {
+        const statuses = Object.keys(config)
+          .filter(key => config[key].enabled === true)
+          .map(key => ({
+            key,
+            display_title: config[key].display_title,
+            lead_status: config[key].lead_status
+          }));
+        setCallStatuses(statuses);
+        console.log('Loaded Call Statuses:', JSON.stringify(statuses));
+      }
+    };
+    fetchCallStatuses();
+  }, []);
 
   // Update form data when selectedLead changes
   React.useEffect(() => {
@@ -97,18 +118,19 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
 
       // Add chats as activities
       if (chats) {
-        chats.forEach(chat => {
-          activities.push({
+        const chatActivities = await Promise.all(
+          chats.map(async (chat: any) => ({
             id: `chat-${chat.id}`,
             type: 'call',
-            title: 'Status: ' + getCallTitle(chat.call_status),
+            title: 'Status: ' + (await getCallTitle(chat.call_status)),
             date: new Date(chat.created_at),
             notes: chat.mom,
             additionalInfo: chat.notes,
             status: chat.call_status,
             created_by: chat.created_by_profile?.name
-          });
-        });
+          }))
+        );
+        activities.push(...chatActivities);
       }
 
       // Add followups as activities
@@ -135,29 +157,6 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
       console.error('Error fetching recent activity:', error);
     } finally {
       setActivityLoading(false);
-    }
-  };
-
-  const getCallTitle = (callStatus: string) => {
-    switch (callStatus) {
-      case 'list-sent':
-        return 'List Sent';
-      case 'follow-up-scheduled':
-        return 'Follow-up Call';
-      case 'no-answer':
-        return 'No Answer';
-      case 'denied':
-        return 'Call Denied';
-      case 'converted':
-        return 'Successful Conversion';
-      case 'interested':
-        return 'Interested Contact';
-      case 'not-interested':
-        return 'Not Interested';
-      case 'callback-requested':
-        return 'Callback Requested';
-      default:
-        return 'Call Made';
     }
   };
 
@@ -342,14 +341,11 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
             required
           >
             <option value="">Select call status</option>
-            <option value="list-sent">List Sent</option>
-            <option value="follow-up-scheduled">Follow Up Scheduled</option>
-            <option value="no-answer">Didn't Pick Up</option>
-            <option value="denied">Denied</option>
-            <option value="converted">Converted</option>
-            <option value="interested">Interested</option>
-            <option value="not-interested">Not Interested</option>
-            <option value="callback-requested">Callback Requested</option>
+            {callStatuses?.map((s: { key: string; display_title: string }) => (
+              <option key={s.key} value={s.key}>
+                {s.display_title}
+              </option>
+            ))}
           </select>
         </div>
 

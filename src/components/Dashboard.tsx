@@ -161,12 +161,14 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
     }
 
     console.log('Lead data', lead)
+    const lead_status = await getLeadStatusFromCallStatus(callData.callStatus)
+    console.log('Determined lead status:', lead_status);
     // Update lead's calls_made count, status and last_contact
     const { data: updatedLead, error: leadError } = await supabase
       .from('leads')
       .update({
         last_contact: new Date().toISOString(),
-        status: getLeadStatusFromCallStatus(callData.callStatus)
+        status: lead_status
       })
       .eq('id', lead.id)
       .select()

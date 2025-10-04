@@ -16,6 +16,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab, us
     { id: 'leads', label: 'Leads', icon: UserCheck },
     { id: 'employees', label: 'Employee Management', icon: Users },
     { id: 'reports', label: 'Reports', icon: FileText },
+    { id: 'settings', label: 'Settings', icon: FileText },
   ];
 
   return (

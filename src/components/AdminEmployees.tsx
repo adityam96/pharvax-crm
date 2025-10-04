@@ -3,6 +3,8 @@ import { useEffect } from 'react';
 import { Search, Filter, Edit, Trash2, ChevronDown, X, User, Mail, Phone, Calendar, UserCheck, TrendingUp, FileText } from 'lucide-react';
 import { getAllEmployees, supabase, logSupabaseCall, getChatAndFollowUpsForEmployee } from '../lib/supabase';
 import { userCache } from '../lib/userCache';
+import { getCallStatusConfig } from '../lib/configDataService';
+import { getCallTitle } from '../lib/utils';
 
 const AdminEmployees: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -334,8 +336,8 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
 
       // Add chats as interactions
       if (chats) {
-        chats.forEach(chat => {
-          interactions.push({
+        const chatInteractions = await Promise.all(
+          chats.map(async (chat) => ({
             id: `chat-${chat.id}`,
             type: 'call',
             leadName: chat.lead?.name || 'Unknown Lead',
@@ -344,10 +346,11 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
             lastContact: new Date(chat.created_at).toLocaleDateString(),
             callsMade: 1, // Each chat represents one call
             notes: chat.mom || 'No notes available',
-            callStatus: getCallTitle(chat.call_status),
+            callStatus: await getCallTitle(chat.call_status),
             date: new Date(chat.created_at)
-          });
-        });
+          }))
+        );
+        interactions.push(...chatInteractions);
       }
 
       // Add followups as interactions
@@ -377,29 +380,6 @@ const EditEmployeeModal = ({ employee, onSave, onClose }) => {
       console.error('Error fetching lead interactions:', error);
     } finally {
       setInteractionsLoading(false);
-    }
-  };
-
-  const getCallTitle = (callStatus) => {
-    switch (callStatus) {
-      case 'list-sent':
-        return 'List Sent';
-      case 'follow-up-scheduled':
-        return 'Follow-up Call';
-      case 'no-answer':
-        return 'No Answer';
-      case 'denied':
-        return 'Call Denied';
-      case 'converted':
-        return 'Successful Conversion';
-      case 'interested':
-        return 'Interested Contact';
-      case 'not-interested':
-        return 'Not Interested';
-      case 'callback-requested':
-        return 'Callback Requested';
-      default:
-        return 'Call Made';
     }
   };
 

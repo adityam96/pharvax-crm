@@ -303,3 +303,32 @@ export const getEmployeeNotes = async (leadId: string) => {
     return { user: null, error }
   }
 }
+
+export const updateCallStatusesConfig = async (config: string) => {
+  try {
+    console.log("Updating call statuses config:", config)
+    const { data, error } = await logSupabaseCall('updateStatusesConfig', () => supabase
+      .from('app_config')
+      .update({
+        value: JSON.parse(config)
+      })
+      .eq('key', "call_statuses"))
+    return { data, error }
+  } catch (error) {
+    return { user: null, error }
+  }
+}
+
+export const getAdminConfig = async () => {
+  try {
+    const { data, error } = await logSupabaseCall('getAllAdminConfig', () => supabase
+      .from('app_config')
+      .select(`
+          *
+        `)
+      .in('scope', ['ALL', 'ADMIN']))
+    return { data, error }
+  } catch (error) {
+    return { user: null, error }
+  }
+}

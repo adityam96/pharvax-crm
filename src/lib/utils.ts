@@ -1,25 +1,29 @@
 // Utility functions
 
+import { getCallStatusConfig } from "./configDataService";
+
 // Map call status to lead status
 export const getLeadStatusFromCallStatus = (callStatus: string) => {
-  switch (callStatus) {
-    case 'list-sent':
-      return 'In Progress';
-    case 'follow-up-scheduled':
-      return 'In Progress';
-    case 'no-answer':
-      return 'Open';
-    case 'denied':
-      return 'Failed';
-    case 'converted':
-      return 'Closed';
-    case 'interested':
-      return 'In Progress';
-    case 'not-interested':
-      return 'Failed';
-    case 'callback-requested':
-      return 'In Progress';
-    default:
-      return 'In Progress';
-  }
+  return getCallStatusConfig().then((config) => {
+    if (config && config[callStatus]) {
+      console.log('Mapping call status:', callStatus, 'to lead status:', config[callStatus]['lead_status']);
+      return config[callStatus]['lead_status'];
+    }
+  }).catch((error) => {
+    console.error('Error getting call statuses from config:', error);
+    return callStatus
+  });
 }
+
+
+export const getCallTitle = async (callStatus: string) => {
+  try {
+    const config = await getCallStatusConfig();
+    const title = config?.[callStatus]?.['display_title'];
+    console.log('Call status title from config:', title);
+    return title ?? callStatus;
+  } catch (error) {
+    console.error('Error getting call statuses from config:', error);
+    return callStatus;
+  }
+};
