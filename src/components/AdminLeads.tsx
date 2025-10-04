@@ -12,6 +12,7 @@ const AdminLeads: React.FC = () => {
   const [establishmentTypeFilter, setEstablishmentTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [sourceFilter, setSourceFilter] = useState('All');
+  const [areaFilter, setAreaFilter] = useState('All');
   const [dateRange, setDateRange] = useState('01/01/2024 - 03/31/2024');
   const [selectedLead, setSelectedLead] = useState(null);
   const [selectedLeadForAdminNotes, setSelectedLeadForAdminNotes] = useState(null);
@@ -28,7 +29,8 @@ const AdminLeads: React.FC = () => {
     assignedTo: ['All'],
     establishmentTypes: ['All'],
     statuses: ['All'],
-    sources: ['All']
+    sources: ['All'],
+    areas: ['All']
   });
   const [adminNotes, setAdminNotes] = useState([]);
   const [adminOnlyNotes, setAdminOnlyNotes] = useState([]);
@@ -102,12 +104,14 @@ const AdminLeads: React.FC = () => {
       const establishmentTypeOptions = ['All', ...new Set(transformedData.map(lead => lead.establishmentType).filter(Boolean))];
       const statusOptions = ['All', ...new Set(transformedData.map(lead => lead.status).filter(Boolean))];
       const sourceOptions = ['All', ...new Set(transformedData.map(lead => lead.source).filter(Boolean))];
+      const areaOptions = ['All', ...new Set(transformedData.map(lead => lead.area).filter(Boolean))];
 
       setFilterOptions({
         assignedTo: assignedToOptions,
         establishmentTypes: establishmentTypeOptions,
         statuses: statusOptions,
-        sources: sourceOptions
+        sources: sourceOptions,
+        areas: areaOptions
       });
     } catch (error) {
       console.error('Error fetching leads:', error);
@@ -285,8 +289,8 @@ const AdminLeads: React.FC = () => {
     const matchesEstablishmentType = establishmentTypeFilter === 'All' || lead.establishmentType === establishmentTypeFilter;
     const matchesStatus = statusFilter === 'All' || lead.status === statusFilter;
     const matchesSource = sourceFilter === 'All' || lead.source === sourceFilter;
-
-    return matchesSearch && matchesAssignedTo && matchesEstablishmentType && matchesStatus && matchesSource;
+    const matchesArea = areaFilter === 'All' || lead.area === areaFilter;
+    return matchesSearch && matchesAssignedTo && matchesEstablishmentType && matchesStatus && matchesSource && matchesArea;
   });
 
   const handleSelectLead = (leadId: string) => {
@@ -514,6 +518,21 @@ const AdminLeads: React.FC = () => {
                   {filterOptions.statuses.map((option) => (
                     <option key={option} value={option}>
                       {option === 'All' ? 'All Statuses' : option}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+              </div>
+
+              <div className="relative">
+                <select
+                  value={areaFilter}
+                  onChange={(e) => setAreaFilter(e.target.value)}
+                  className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {filterOptions.areas.map((area) => (
+                    <option key={area} value={area}>
+                      {area === 'All' ? 'All Areas' : area}
                     </option>
                   ))}
                 </select>
