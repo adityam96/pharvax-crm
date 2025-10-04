@@ -92,6 +92,7 @@ const AdminLeads: React.FC = () => {
         status: lead.status,
         lastContact: lead.last_contact?.split('T')[0] || '',
         area: lead.area || 'N/A',
+        additionalInformation: lead.additional_information || '',
       }));
 
       setAllLeads(transformedData);
@@ -822,6 +823,21 @@ const AdminLeads: React.FC = () => {
                       <div>
                         <p className="text-sm text-gray-600">Phone</p>
                         <p className="text-gray-900">{selectedLead.phone}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Information */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                    Additional Information
+                  </h4>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <div>
+                        <p className="text-gray-900 whitespace-pre-wrap break-words">{selectedLead.additionalInformation}</p>
                       </div>
                     </div>
                   </div>

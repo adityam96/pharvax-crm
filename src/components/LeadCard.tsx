@@ -41,7 +41,7 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onLogCall }) => {
           {lead.establishmentType && (
             <p className="text-sm text-blue-600 font-medium mb-1">{lead.establishmentType}</p>
           )}
-          {lead.company && (
+          {lead.name && (
             <p className="text-sm text-gray-700 mb-1">POC: {lead.name}</p>
           )}
         </div>

@@ -45,3 +45,15 @@ export function convertToMap(payload: any) {
   // Fallback: generic Map<key, value>
   return new Map(items.map((item: any) => [item.key, item.value]));
 }
+
+
+
+export const getLeadLabelsConfig = () => {
+  return getConfig().then((config) => {
+    console.log('Retrieved call statuses from config:', config);
+    return config.lead_labels;
+  }).catch((error) => {
+    console.error('Error getting call statuses from config:', error);
+    return {};
+  });
+}

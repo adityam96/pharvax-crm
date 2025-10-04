@@ -82,9 +82,11 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
         establishmentType: lead.establishment_type,
         assignedTo: lead.assigned_to_profile?.name || 'Unassigned',
         callsMade: lead.calls_made,
-        lastContact: lead.last_contact
+        lastContact: lead.last_contact,
+        additionalInfo: lead.additional_information
       }));
 
+      console.log('Transformed leads data:', transformedData);
       setAllLeads(transformedData);
     } catch (error) {
       console.error('Error fetching leads:', error);
@@ -594,6 +596,21 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
                     <div>
                       <p className="text-sm text-gray-600">Assigned To</p>
                       <p className="text-gray-900">{selectedLead.assignedTo}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Information */}
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                  Additional Information
+                </h4>
+
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <div>
+                      <p className="text-gray-900 whitespace-pre-wrap break-words">{selectedLead.additionalInfo}</p>
                     </div>
                   </div>
                 </div>

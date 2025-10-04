@@ -414,6 +414,21 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
           <span>Save</span>
         </button>
       </form>
+      <br></br>
+      {/* Additional Information */}
+      {selectedLead && (<div className="space-y-4">
+        <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+          Additional Information
+        </h4>
+
+        <div className="space-y-3">
+          <div className="flex items-center space-x-3">
+            <div>
+              <p className="text-gray-900 whitespace-pre-wrap break-words">{selectedLead.additionalInfo}</p>
+            </div>
+          </div>
+        </div>
+      </div>)}
 
       {/* Recent Activity Section */}
       {selectedLead && (

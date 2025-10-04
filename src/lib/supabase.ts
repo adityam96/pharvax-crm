@@ -332,3 +332,20 @@ export const getAdminConfig = async () => {
     return { user: null, error }
   }
 }
+
+
+
+export const updateLeadLabelsConfig = async (config: string) => {
+  try {
+    console.log("Updating lead labels config:", config)
+    const { data, error } = await logSupabaseCall('updateLeadLabelsConfig', () => supabase
+      .from('app_config')
+      .update({
+        value: JSON.parse(config)
+      })
+      .eq('key', "lead_labels"))
+    return { data, error }
+  } catch (error) {
+    return { user: null, error }
+  }
+}

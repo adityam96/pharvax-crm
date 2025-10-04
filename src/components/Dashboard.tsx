@@ -80,6 +80,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
         return;
       }
 
+      console.log('Raw leads data:', data);
       // Transform data to match expected format
       const transformedData = data.map(lead => ({
         id: lead.id,
@@ -90,9 +91,10 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
         company: lead.company,
         establishmentType: lead.establishment_type,
         callsMade: lead.calls_made,
-        lastContact: lead.last_contact
+        lastContact: lead.last_contact,
+        additionalInfo: lead.additional_information
       }));
-
+      console.log('Transformed leads data:', transformedData);
       setLeads(transformedData);
     } catch (error) {
       console.error('Error fetching leads:', error);
