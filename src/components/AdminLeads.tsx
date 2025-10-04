@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useEffect } from 'react';
-import { Search, Filter, Download, Calendar, ChevronDown, Upload, Plus, X, Mail, Phone, Building, User, Edit, UserCheck, FileText, AlertCircle, CheckCircle, Users, MessageSquare, Send, AreaChart, PlayCircle, NavigationIcon, MapIcon } from 'lucide-react';
+import { Search, Filter, Download, Calendar, ChevronDown, Upload, Plus, X, Mail, Phone, Building, User, CreditCard as Edit, UserCheck, FileText, AlertCircle, CheckCircle, Users, MessageSquare, Send, AreaChart, PlayCircle, Navigation as NavigationIcon, Map as MapIcon } from 'lucide-react';
 import { supabase, getAllLeads, getAllEmployees, getChatAndFollowUps, getUserProfile, getAllNotes, getAdminNotes } from '../lib/supabase';
 import { userCache } from '../lib/userCache';
 import { getCallStatusConfig } from '../lib/configDataService';
@@ -466,92 +466,128 @@ const AdminLeads: React.FC = () => {
         <div className="bg-white border-b border-gray-200 px-6 py-4">
           <div className="space-y-4">
             {/* Search Row */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search leads..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
-              />
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                Search
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search by name, email, or company..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full lg:w-96 text-sm"
+                />
+              </div>
             </div>
 
             {/* Filter Dropdowns Row */}
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="relative">
-                <select
-                  value={assignedToFilter}
-                  onChange={(e) => setAssignedToFilter(e.target.value)}
-                  className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {filterOptions.assignedTo.map((option) => (
-                    <option key={option} value={option}>
-                      {option === 'All' ? 'All' : option}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+            <div>
+              <div className="flex items-center space-x-2 mb-3">
+                <Filter className="w-5 h-5 text-gray-500" />
+                <span className="text-sm font-semibold text-gray-900">Filters</span>
               </div>
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                    Assigned To
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={assignedToFilter}
+                      onChange={(e) => setAssignedToFilter(e.target.value)}
+                      className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full text-sm"
+                    >
+                      {filterOptions.assignedTo.map((option) => (
+                        <option key={option} value={option}>
+                          {option === 'All' ? 'All' : option}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                  </div>
+                </div>
 
-              <div className="relative">
-                <select
-                  value={establishmentTypeFilter}
-                  onChange={(e) => setEstablishmentTypeFilter(e.target.value)}
-                  className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {filterOptions.establishmentTypes.map((option) => (
-                    <option key={option} value={option}>
-                      {option === 'All' ? 'All Types' : option}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-              </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                    Establishment Type
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={establishmentTypeFilter}
+                      onChange={(e) => setEstablishmentTypeFilter(e.target.value)}
+                      className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full text-sm"
+                    >
+                      {filterOptions.establishmentTypes.map((option) => (
+                        <option key={option} value={option}>
+                          {option === 'All' ? 'All Types' : option}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                  </div>
+                </div>
 
-              <div className="relative">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {filterOptions.statuses.map((option) => (
-                    <option key={option} value={option}>
-                      {option === 'All' ? 'All Statuses' : option}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-              </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                    Status
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full text-sm"
+                    >
+                      {filterOptions.statuses.map((option) => (
+                        <option key={option} value={option}>
+                          {option === 'All' ? 'All Statuses' : option}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                  </div>
+                </div>
 
-              <div className="relative">
-                <select
-                  value={areaFilter}
-                  onChange={(e) => setAreaFilter(e.target.value)}
-                  className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {filterOptions.areas.map((area) => (
-                    <option key={area} value={area}>
-                      {area === 'All' ? 'All Areas' : area}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-              </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                    Area
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={areaFilter}
+                      onChange={(e) => setAreaFilter(e.target.value)}
+                      className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full text-sm"
+                    >
+                      {filterOptions.areas.map((area) => (
+                        <option key={area} value={area}>
+                          {area === 'All' ? 'All Areas' : area}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                  </div>
+                </div>
 
-              <div className="relative">
-                <select
-                  value={sourceFilter}
-                  onChange={(e) => setSourceFilter(e.target.value)}
-                  className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {filterOptions.sources.map((source) => (
-                    <option key={source} value={source}>
-                      {source === 'All' ? 'All Sources' : source}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                    Source
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={sourceFilter}
+                      onChange={(e) => setSourceFilter(e.target.value)}
+                      className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full text-sm"
+                    >
+                      {filterOptions.sources.map((source) => (
+                        <option key={source} value={source}>
+                          {source === 'All' ? 'All Sources' : source}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
