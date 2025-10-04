@@ -37,17 +37,19 @@ function EmployeeDashboard({ userData }: EmployeeDashboardProps) {
         />
       </div>
 
-      {/* Mobile sidebar - toggleable */}
-      <Sidebar
-        activeTab={activeTab}
-        setActiveTab={(tab) => {
-          setActiveTab(tab);
-          setIsSidebarOpen(false);
-        }}
-        userData={userData}
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-      />
+      {/* Mobile sidebar - toggleable (only visible on mobile) */}
+      <div className="lg:hidden">
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={(tab) => {
+            setActiveTab(tab);
+            setIsSidebarOpen(false);
+          }}
+          userData={userData}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+        />
+      </div>
 
       <div className="flex-1 overflow-hidden">
         {renderContent()}
