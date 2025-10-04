@@ -345,7 +345,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
             )}
             <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Leads</h1>
           </div>
-          <div className="flex items-center space-x-2">
+          {/* <div className="flex items-center space-x-2">
             <button
               onClick={() => setShowAddLeadModal(true)}
               className="bg-green-600 hover:bg-green-700 text-white px-3 lg:px-4 py-2 rounded-lg transition-colors duration-200 font-medium flex items-center space-x-2 text-sm lg:text-base"
@@ -354,7 +354,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
               <span className="hidden sm:inline">Add Lead</span>
               <span className="sm:hidden">Add</span>
             </button>
-          </div>
+          </div> */}
         </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -385,11 +385,10 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    statusFilter === status
-                      ? 'bg-green-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow'
-                  }`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${statusFilter === status
+                    ? 'bg-green-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow'
+                    }`}
                 >
                   {status} <span className="opacity-75">({count})</span>
                 </button>
@@ -428,11 +427,10 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
                     setStatusFilter(status);
                     setShowFilters(false);
                   }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    statusFilter === status
-                      ? 'bg-green-600 text-white shadow-md'
-                      : 'bg-white text-gray-700 hover:bg-gray-100 hover:shadow border border-gray-200'
-                  }`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${statusFilter === status
+                    ? 'bg-green-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 hover:shadow border border-gray-200'
+                    }`}
                 >
                   {status} <span className="opacity-75">({count})</span>
                 </button>
