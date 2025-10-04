@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
-import { Calendar, Save } from 'lucide-react';
+import { Calendar, MessageCircle, PhoneIcon, Save } from 'lucide-react';
 import { getChatAndFollowUps, supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getCallStatusConfig } from '../lib/configDataService';
@@ -196,6 +196,37 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Helpers to normalize phone numbers (default to India if no country code)
+  const onlyDigits = (s: string) => (s || '').replace(/[^\d]/g, '');
+
+  const toE164WithIndiaDefault = (raw: string) => {
+    const digits = onlyDigits(raw);
+    if (!digits) return '';
+    // If already starts with 91 (India), assume full international without plus
+    if (digits.startsWith('91') && digits.length > 10) return '+' + digits;
+    // If user entered a leading 0, strip and add +91
+    if (digits.startsWith('0')) {
+      const stripped = digits.replace(/^0+/, '');
+      return stripped ? '+91' + stripped : '';
+    }
+    // If 10 digits, assume Indian national number
+    if (digits.length === 10) return '+91' + digits;
+    // Otherwise, assume user provided full international without plus
+    return '+' + digits;
+  };
+
+  const buildTelHref = (raw: string) => {
+    const e164 = toE164WithIndiaDefault(raw);
+    return e164 ? `tel:${e164}` : 'tel:';
+  };
+
+  // WhatsApp requires international format without the plus sign
+  const buildWhatsAppUrl = (raw: string) => {
+    const e164 = toE164WithIndiaDefault(raw);
+    const intlNoPlus = e164.replace(/^\+/, '');
+    return intlNoPlus ? `https://wa.me/${intlNoPlus}` : 'https://wa.me/'; // opens WhatsApp home if empty
+  };
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm h-fit">
       <div className="mb-6">
@@ -240,6 +271,32 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
             required
           />
         </div>
+
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => (window.location.href = buildTelHref(formData.phone))}
+              disabled={!formData.phone}
+              className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2.5 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Call this number"
+            >
+              <PhoneIcon className="w-4 h-4" />
+              Call
+            </button>
+            <button
+              type="button"
+              onClick={() => window.open(buildWhatsAppUrl(formData.phone), '_blank')}
+              disabled={!formData.phone}
+              className="inline-flex items-center gap-1 rounded-md bg-green-600 px-2.5 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Open WhatsApp with this number"
+            >
+              <MessageCircle className="w-4 h-4" />
+              WhatsApp
+            </button>
+          </div>
+        </div>
+
 
         {!selectedLead && (
           <>
