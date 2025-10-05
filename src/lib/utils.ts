@@ -27,3 +27,13 @@ export const getCallTitle = async (callStatus: string) => {
     return callStatus;
   }
 };
+
+export const formatLocal = (isoString: string) => {
+  // JS Date only keeps milliseconds; trim extra fractional digits if needed
+  const safe = isoString.replace(/(\.\d{3})\d+/, "$1");
+  const d = new Date(safe);
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(d);
+}

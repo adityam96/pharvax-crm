@@ -423,6 +423,9 @@ const AdminLeads: React.FC = () => {
 
   const reassignLead = async (leadId, newAssigneeId) => {
     try {
+      if (newAssigneeId === 'unassign') {
+        newAssigneeId = null; // Unassign the lead
+      }
       const { error } = await supabase
         .from('leads')
         .update({ assigned_to: newAssigneeId })
@@ -433,7 +436,11 @@ const AdminLeads: React.FC = () => {
         alert('Error reassigning lead');
         return;
       }
-
+      if (newAssigneeId) {
+        alert('Sucessfully reassigned lead to: ' + employees.find(emp => emp.id === newAssigneeId)?.name);
+      } else {
+        alert('Successfully unassigned lead');
+      }
       setSelectedLead(null);
       fetchLeads();
     } catch (error) {
@@ -863,6 +870,10 @@ const AdminLeads: React.FC = () => {
                       defaultValue=""
                     >
                       <option value="" disabled>Reassign to...</option>
+                      {/* Show "Unassign" only if there's an assignee */}
+                      {(selectedLead.assignedToId !== null && selectedLead.assignedToId !== undefined) && (
+                        <option key="unassign" value="unassign">Unassign</option>
+                      )}
                       {employees.filter(emp => emp.id !== selectedLead.assignedToId).map(employee => (
                         <option key={employee.id} value={employee.id}>{employee.name}</option>
                       ))}

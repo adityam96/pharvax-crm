@@ -5,7 +5,7 @@ import { supabase, getLeadsAssignedToCurrentUser, getUserProfile, getChatAndFoll
 import { useAuth } from '../contexts/AuthContext';
 import { userCache } from '../lib/userCache';
 import { getCallStatusConfig } from '../lib/configDataService';
-import { getCallTitle } from '../lib/utils';
+import { formatLocal, getCallTitle } from '../lib/utils';
 
 interface LeadsProps {
   onLogCall: (lead: any) => void;
@@ -87,6 +87,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
         additionalInfo: lead.additional_information,
         source: lead.source,
         area: lead.area,
+        created_at: lead.created_at
       }));
 
       console.log('Transformed leads data:', transformedData);
@@ -589,8 +590,8 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
                   <div className="flex items-center space-x-3">
                     <Calendar className="w-5 h-5 text-gray-400" />
                     <div>
-                      <p className="text-sm text-gray-600">Created</p>
-                      <p className="text-gray-900">2 weeks ago</p>
+                      <p className="text-sm text-gray-600">Created At</p>
+                      <p className="text-gray-900">{formatLocal(selectedLead.created_at)}</p>
                     </div>
                   </div>
 
@@ -611,6 +612,12 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
                 </h4>
 
                 <div className="space-y-3">
+                  <div>
+                    <p className="text-gray-900 whitespace-pre-wrap break-words">Source: {selectedLead.source}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-900 whitespace-pre-wrap break-words">Area: {selectedLead.area}</p>
+                  </div>
                   <div className="flex items-center space-x-3">
                     <div>
                       <p className="text-gray-900 whitespace-pre-wrap break-words">{selectedLead.additionalInfo}</p>
