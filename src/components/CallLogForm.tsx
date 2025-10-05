@@ -422,6 +422,13 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
         </h4>
 
         <div className="space-y-3">
+
+          <div>
+            <p className="text-gray-900 whitespace-pre-wrap break-words">Source: {selectedLead.source}</p>
+          </div>
+          <div>
+            <p className="text-gray-900 whitespace-pre-wrap break-words">Area: {selectedLead.area}</p>
+          </div>
           <div className="flex items-center space-x-3">
             <div>
               <p className="text-gray-900 whitespace-pre-wrap break-words">{selectedLead.additionalInfo}</p>

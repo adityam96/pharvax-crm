@@ -71,6 +71,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
         return;
       }
 
+      console.log('Raw leads data for Leads:', data);
       // Transform data to match expected format
       const transformedData = data.map(lead => ({
         id: lead.id,
@@ -83,7 +84,9 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
         assignedTo: lead.assigned_to_profile?.name || 'Unassigned',
         callsMade: lead.calls_made,
         lastContact: lead.last_contact,
-        additionalInfo: lead.additional_information
+        additionalInfo: lead.additional_information,
+        source: lead.source,
+        area: lead.area,
       }));
 
       console.log('Transformed leads data:', transformedData);
