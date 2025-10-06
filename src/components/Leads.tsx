@@ -1,10 +1,10 @@
 import React from 'react';
 import { useEffect } from 'react';
-import { UserCheck, Search, Filter, X, Mail, Phone, Building, User, Calendar, Plus, Save, MessageSquare, Send, Menu } from 'lucide-react';
+import { UserCheck, Search, Filter, X, Mail, Phone, Building, User, Calendar, Plus, Save, MessageSquare, Send, Menu, Tag, ChevronDown } from 'lucide-react';
 import { supabase, getLeadsAssignedToCurrentUser, getUserProfile, getChatAndFollowUps, getEmployeeNotes } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { userCache } from '../lib/userCache';
-import { getCallStatusConfig } from '../lib/configDataService';
+import { getCallStatusConfig, getLeadLabelsConfig } from '../lib/configDataService';
 import { formatLocal, getCallTitle } from '../lib/utils';
 
 interface LeadsProps {
@@ -15,7 +15,10 @@ interface LeadsProps {
 const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('All');
+  const [labelFilter, setLabelFilter] = React.useState('All');
   const [selectedLead, setSelectedLead] = React.useState(null);
+  const [availableLabels, setAvailableLabels] = React.useState([]);
+  const [showLabelMenu, setShowLabelMenu] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [allLeads, setAllLeads] = React.useState([]);
   const [recentActivity, setRecentActivity] = React.useState([]);
@@ -33,8 +36,20 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
   useEffect(() => {
     if (user) {
       fetchLeads();
+      fetchLabels();
     }
   }, [user]);
+
+  const fetchLabels = async () => {
+    try {
+      const labels = await getLeadLabelsConfig();
+      console.log('Fetched labels:', labels);
+      setAvailableLabels(Array.isArray(labels) ? labels : []);
+    } catch (error) {
+      console.error('Error fetching labels:', error);
+      setAvailableLabels([]);
+    }
+  };
 
   // Fetch recent activity when a lead is selected
   useEffect(() => {
@@ -87,7 +102,8 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
         additionalInfo: lead.additional_information,
         source: lead.source,
         area: lead.area,
-        created_at: lead.created_at
+        created_at: lead.created_at,
+        labels: Array.isArray(lead.labels) ? lead.labels : (lead.labels ? JSON.parse(lead.labels) : [])
       }));
 
       console.log('Transformed leads data:', transformedData);
@@ -301,8 +317,9 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
       (lead.company && lead.company.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesStatus = statusFilter === 'All' || lead.status === statusFilter;
+    const matchesLabel = labelFilter === 'All' || (lead.labels && lead.labels.includes(labelFilter));
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesLabel;
   });
 
   const statusCounts = {
@@ -401,6 +418,30 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
               ))}
             </div>
           </div>
+
+          {/* Label Filter */}
+          {availableLabels.length > 0 && (
+            <div className="flex flex-col space-y-2">
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                Label
+              </label>
+              <div className="relative">
+                <select
+                  value={labelFilter}
+                  onChange={(e) => setLabelFilter(e.target.value)}
+                  className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm min-w-[150px]"
+                >
+                  <option value="All">All Labels</option>
+                  {availableLabels.map((label) => (
+                    <option key={label} value={label}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -491,6 +532,23 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
                   <span className="text-xs lg:text-sm">{lead.phone}</span>
                 </div>
               </div>
+
+              {/* Labels Section */}
+              {lead.labels && lead.labels.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <div className="flex flex-wrap gap-1">
+                    {lead.labels.map((label, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800"
+                      >
+                        <Tag className="w-3 h-3 mr-1" />
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -571,6 +629,60 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
                   </div>
                 </div>
               </div>
+
+              {/* Labels Management */}
+              {availableLabels.length > 0 && (
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 flex items-center">
+                    <Tag className="w-5 h-5 mr-2" />
+                    Labels
+                  </h4>
+
+                  <div className="flex flex-wrap gap-2">
+                    {availableLabels.map((label) => {
+                      const isSelected = selectedLead.labels && selectedLead.labels.includes(label);
+                      return (
+                        <button
+                          key={label}
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const currentLabels = selectedLead.labels || [];
+                            const newLabels = isSelected
+                              ? currentLabels.filter(l => l !== label)
+                              : [...currentLabels, label];
+
+                            try {
+                              const { error } = await supabase
+                                .from('leads')
+                                .update({ labels: JSON.stringify(newLabels) })
+                                .eq('id', selectedLead.id);
+
+                              if (error) throw error;
+
+                              // Update local state
+                              setSelectedLead({ ...selectedLead, labels: newLabels });
+                              setAllLeads(allLeads.map(l =>
+                                l.id === selectedLead.id ? { ...l, labels: newLabels } : l
+                              ));
+                            } catch (error) {
+                              console.error('Error updating labels:', error);
+                              alert('Failed to update label');
+                            }
+                          }}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                            isSelected
+                              ? 'bg-blue-600 text-white shadow-md'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          <Tag className="w-3 h-3 inline mr-1" />
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Lead Information */}
               <div className="space-y-4">
