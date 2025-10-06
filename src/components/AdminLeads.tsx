@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useEffect } from 'react';
-import { Search, Filter, Download, Calendar, ChevronDown, Upload, Plus, X, Mail, Phone, Building, User, CreditCard as Edit, UserCheck, FileText, AlertCircle, CheckCircle, Users, MessageSquare, Send, AreaChart, PlayCircle, Navigation as NavigationIcon, Map as MapIcon } from 'lucide-react';
+import { Search, Filter, Download, Calendar, ChevronDown, Upload, Plus, X, Mail, Phone, Building, User, CreditCard as Edit, UserCheck, FileText, AlertCircle, CheckCircle, Users, MessageSquare, Send, AreaChart, PlayCircle, Navigation as NavigationIcon, Map as MapIcon, Tag } from 'lucide-react';
 import { supabase, getAllLeads, getAllEmployees, getChatAndFollowUps, getUserProfile, getAllNotes, getAdminNotes } from '../lib/supabase';
 import { userCache } from '../lib/userCache';
 import { getCallStatusConfig } from '../lib/configDataService';
@@ -12,6 +12,7 @@ const AdminLeads: React.FC = () => {
   const [establishmentTypeFilter, setEstablishmentTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [sourceFilter, setSourceFilter] = useState('All');
+  const [labelFilter, setLabelFilter] = useState('All');
   const [areaFilter, setAreaFilter] = useState('All');
   const [dateRange, setDateRange] = useState('01/01/2024 - 03/31/2024');
   const [selectedLead, setSelectedLead] = useState(null);
@@ -30,7 +31,8 @@ const AdminLeads: React.FC = () => {
     establishmentTypes: ['All'],
     statuses: ['All'],
     sources: ['All'],
-    areas: ['All']
+    areas: ['All'],
+    labels: ['All']
   });
   const [adminNotes, setAdminNotes] = useState([]);
   const [adminOnlyNotes, setAdminOnlyNotes] = useState([]);
@@ -93,6 +95,7 @@ const AdminLeads: React.FC = () => {
         lastContact: lead.last_contact?.split('T')[0] || '',
         area: lead.area || 'N/A',
         additionalInformation: lead.additional_information || '',
+        labels: Array.isArray(lead.labels) ? lead.labels : (lead.labels ? JSON.parse(lead.labels) : [])
       }));
 
       setAllLeads(transformedData);
@@ -106,13 +109,24 @@ const AdminLeads: React.FC = () => {
       const statusOptions = ['All', ...new Set(transformedData.map(lead => lead.status).filter(Boolean))];
       const sourceOptions = ['All', ...new Set(transformedData.map(lead => lead.source).filter(Boolean))];
       const areaOptions = ['All', ...new Set(transformedData.map(lead => lead.area).filter(Boolean))];
-
+      const labelOptions = [
+        'All',
+        ...Array.from(
+          new Set(
+            transformedData.flatMap(lead =>
+              Array.isArray(lead.labels) ? lead.labels.filter(Boolean) : []
+            )
+          )
+        ),
+      ];
+      console.log('Label options:', labelOptions);
       setFilterOptions({
         assignedTo: assignedToOptions,
         establishmentTypes: establishmentTypeOptions,
         statuses: statusOptions,
         sources: sourceOptions,
-        areas: areaOptions
+        areas: areaOptions,
+        labels: labelOptions
       });
     } catch (error) {
       console.error('Error fetching leads:', error);
@@ -291,7 +305,10 @@ const AdminLeads: React.FC = () => {
     const matchesStatus = statusFilter === 'All' || lead.status === statusFilter;
     const matchesSource = sourceFilter === 'All' || lead.source === sourceFilter;
     const matchesArea = areaFilter === 'All' || lead.area === areaFilter;
-    return matchesSearch && matchesAssignedTo && matchesEstablishmentType && matchesStatus && matchesSource && matchesArea;
+    const matchesLabel =
+      labelFilter === 'All' ||
+      (lead.labels || []).some(label => label.includes(labelFilter));
+    return matchesSearch && matchesAssignedTo && matchesEstablishmentType && matchesStatus && matchesSource && matchesArea && matchesLabel;
   });
 
   const handleSelectLead = (leadId: string) => {
@@ -596,6 +613,26 @@ const AdminLeads: React.FC = () => {
                     <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                    Labels
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={labelFilter}
+                      onChange={(e) => setLabelFilter(e.target.value)}
+                      className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full text-sm"
+                    >
+                      {filterOptions.labels.map((label) => (
+                        <option key={label} value={label}>
+                          {label === 'All' ? 'All Labels' : label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -646,7 +683,7 @@ const AdminLeads: React.FC = () => {
               <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
                 <div
                   key={lead.id}
-                  className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
+                  className="bg-white rounded-t-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
                   onClick={() => handleCardClick(lead)}
                 >
                   <div className="flex justify-between items-start mb-3">
@@ -683,10 +720,45 @@ const AdminLeads: React.FC = () => {
                     </div>
                   </div>
                 </div>
+                {/* Labels Section */}
+                {lead.labels && lead.labels.length > 0 && (
+                  <div className="bg-white border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer">
+                    <div className="flex items-center space-x-2 text-gray-600">
+                      {lead.labels.map((label, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800"
+                        >
+                          <Tag className="w-3 h-3 mr-1" />
+                          {label}
+                        </span>
+                      ))}
+                      <button
+                        onClick={() => alert('Feature to add labels coming soon!')}
+                        className="flex items-center text-sm text-blue-600 hover:underline">
+                        <Plus className="w-4 h-4 text-gray-400 ml-2" />
+                      </button>
+                    </div>
+                  </div>
+                ) || (<div className="bg-white border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer">
+                  <div className="flex items-center space-x-2 text-gray-600">
+                    <span
+                      key="No label"
+                      className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-grey-100 text-blue-800"
+                    >
+                      No Labels
+                    </span>
+                    <button
+                      onClick={() => alert('Feature to add labels coming soon!')}
+                      className="flex items-center text-sm text-blue-600 hover:underline">
+                      <Plus className="w-4 h-4 text-gray-400 ml-2" />
+                    </button>
+                  </div>
+                </div>)}
                 {/* Sticky (attached) full-width admin notes footer */}
                 <div
                   key={'admin-note' + lead.id}
-                  className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
+                  className="bg-white rounded-b-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
                   onClick={() => handleAdminNotesClick(lead, event)}
                 >
                   <div className="flex items-center space-x-2 text-gray-600">
@@ -1065,7 +1137,7 @@ const AdminLeads: React.FC = () => {
             onClose={() => setShowBulkAssignModal(false)}
           />
         )}
-      </div>
+      </div >
     </>
   );
 };
