@@ -95,7 +95,8 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedLeadForCall, onLeadCallLo
         additionalInfo: lead.additional_information,
         source: lead.source,
         area: lead.area,
-        created_at: lead.created_at
+        created_at: lead.created_at,
+        labels: Array.isArray(lead.labels) ? lead.labels : (lead.labels ? JSON.parse(lead.labels) : [])
       }));
       console.log('Transformed leads data for dashboard:', transformedData);
       setLeads(transformedData);

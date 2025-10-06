@@ -1,5 +1,6 @@
-import React from 'react';
-import { Phone, Mail } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Phone, Mail, Tag } from 'lucide-react';
+import { getLeadLabelsConfig } from '../lib/configDataService';
 
 interface Lead {
   id: string;
@@ -17,6 +18,24 @@ interface LeadCardProps {
 }
 
 const LeadCard: React.FC<LeadCardProps> = ({ lead, onLogCall }) => {
+  const [availableLabels, setAvailableLabels] = React.useState([]);
+
+  // Fetch leads from database
+  useEffect(() => {
+    fetchLabels();
+  }, []);
+
+  const fetchLabels = async () => {
+    try {
+      const labels = await getLeadLabelsConfig();
+      console.log('Fetched labels:', labels);
+      setAvailableLabels(Array.isArray(labels) ? labels : []);
+    } catch (error) {
+      console.error('Error fetching labels:', error);
+      setAvailableLabels([]);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Open':
@@ -65,6 +84,22 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onLogCall }) => {
         </div>
       </div>
 
+      {/* Labels Section */}
+      {lead.labels && lead.labels.length > 0 && (
+        <div className="space-y-2 mb-4 mt-3 pt-3 border-t border-gray-200">
+          <div className="flex flex-wrap gap-1">
+            {lead.labels.map((label, index) => (
+              <span
+                key={index}
+                className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800"
+              >
+                <Tag className="w-3 h-3 mr-1" />
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="pt-3 border-t border-gray-100">
         <button
           onClick={(e) => {
