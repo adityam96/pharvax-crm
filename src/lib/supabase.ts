@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { userCache } from './userCache'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key'
@@ -92,6 +93,17 @@ export const getUserProfile = async (userId: string) => {
     return result
   } catch (error) {
     return { user: null, error }
+  }
+}
+
+export const updateUserProfileCache = async (userId: string) => {
+  try {
+    const result = await getUserProfile(userId)
+    userCache.setProfile(result.data)
+    return;
+  } catch (error) {
+    console.error('Failed to update user profile cache:', error)
+    return;
   }
 }
 

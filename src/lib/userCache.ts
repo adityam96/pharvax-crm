@@ -1,3 +1,5 @@
+import { updateUserProfileCache } from "./supabase";
+
 // User and profile caching utility
 interface CachedUserData {
   user: any;
@@ -6,7 +8,7 @@ interface CachedUserData {
 }
 
 // const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
-const CACHE_DURATION = 1; // 10 minutes in milliseconds
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
 const USER_CACHE_KEY = 'pharvax_user_cache';
 const PROFILE_CACHE_KEY = 'pharvax_profile_cache';
 
@@ -63,8 +65,15 @@ export const userCache = {
 
       // Check if cache is expired
       if (now - cacheData.timestamp > CACHE_DURATION) {
+        console.log('[userProfileCache] Profile cache expired.');
         sessionStorage.removeItem(PROFILE_CACHE_KEY);
         return null;
+      }
+
+      // check if cache is at half time, if yes refresh the cache
+      if (now - cacheData.timestamp > CACHE_DURATION / 2) {
+        console.log('[userProfileCache] Refreshing user profile cache...');
+        updateUserProfileCache(cacheData.user.id);
       }
 
       return cacheData.userProfile;
