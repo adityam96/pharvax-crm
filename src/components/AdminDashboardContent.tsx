@@ -88,13 +88,13 @@ const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ setActive
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-lg text-gray-600 mb-2">{stat.label}</p>
-                    <p className="text-5xl font-bold text-gray-900">
+                    <div className="text-5xl font-bold text-gray-900">
                       {loading ? (
                         <div className="w-12 h-12 border-4 border-gray-300 border-t-green-500 rounded-full animate-spin"></div>
                       ) : (
                         stat.value
                       )}
-                    </p>
+                    </div>
                   </div>
                   <div className={`p-4 rounded-xl ${stat.color}`}>
                     <Icon className="w-12 h-12 text-white" />

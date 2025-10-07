@@ -702,7 +702,7 @@ const AdminLeads: React.FC = () => {
           {/* Leads Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredLeads.map((lead) => (
-              <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+              <div key={lead.id} className="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
                 <div
                   key={lead.id}
                   className="bg-white rounded-t-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
