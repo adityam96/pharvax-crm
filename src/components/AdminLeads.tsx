@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { Search, Filter, Download, Calendar, ChevronDown, Upload, Plus, X, Mail, Phone, Building, User, CreditCard as Edit, UserCheck, FileText, AlertCircle, CheckCircle, Users, MessageSquare, Send, AreaChart, PlayCircle, Navigation as NavigationIcon, Map as MapIcon, Tag } from 'lucide-react';
 import { supabase, getAllLeads, getAllEmployees, getChatAndFollowUps, getUserProfile, getAllNotes, getAdminNotes } from '../lib/supabase';
 import { userCache } from '../lib/userCache';
-import { getCallStatusConfig } from '../lib/configDataService';
+import { getCallStatusConfig, getLeadLabelsConfig } from '../lib/configDataService';
 import { getCallTitle } from '../lib/utils';
 
 const AdminLeads: React.FC = () => {
@@ -42,12 +42,27 @@ const AdminLeads: React.FC = () => {
   const [noteLevel, setNoteLevel] = useState('info');
   const [addingNote, setAddingNote] = useState(false);
   const [adminNotesDialogPosition, setAdminNotesDialogPosition] = useState({ top: 0, left: 0 });
+  const [showLabelModal, setShowLabelModal] = useState(false);
+  const [selectedLeadForLabels, setSelectedLeadForLabels] = useState(null);
+  const [availableLabels, setAvailableLabels] = useState([]);
 
   // Fetch data from database
   useEffect(() => {
     fetchLeads();
     fetchEmployees();
+    fetchLabels();
   }, []);
+
+  const fetchLabels = async () => {
+    try {
+      const labels = await getLeadLabelsConfig();
+      console.log('Fetched labels:', labels);
+      setAvailableLabels(Array.isArray(labels) ? labels : []);
+    } catch (error) {
+      console.error('Error fetching labels:', error);
+      setAvailableLabels([]);
+    }
+  };
 
   // Fetch all notes when a lead is selected
   useEffect(() => {
@@ -734,24 +749,27 @@ const AdminLeads: React.FC = () => {
                         </span>
                       ))}
                       <button
-                        onClick={() => alert('Feature to add labels coming soon!')}
-                        className="flex items-center text-sm text-blue-600 hover:underline">
-                        <Plus className="w-4 h-4 text-gray-400 ml-2" />
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedLeadForLabels(lead);
+                          setShowLabelModal(true);
+                        }}
+                        className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors">
+                        <Plus className="w-4 h-4 text-blue-600" />
                       </button>
                     </div>
                   </div>
-                ) || (<div className="bg-white border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer">
-                  <div className="flex items-center space-x-2 text-gray-600">
-                    <span
-                      key="No label"
-                      className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-grey-100 text-blue-800"
-                    >
-                      No Labels
-                    </span>
+                ) || (<div className="bg-white border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">No labels</span>
                     <button
-                      onClick={() => alert('Feature to add labels coming soon!')}
-                      className="flex items-center text-sm text-blue-600 hover:underline">
-                      <Plus className="w-4 h-4 text-gray-400 ml-2" />
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedLeadForLabels(lead);
+                        setShowLabelModal(true);
+                      }}
+                      className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors">
+                      <Plus className="w-4 h-4 text-blue-600" />
                     </button>
                   </div>
                 </div>)}
@@ -1071,6 +1089,26 @@ const AdminLeads: React.FC = () => {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Label Management Modal */}
+        {showLabelModal && selectedLeadForLabels && (
+          <LabelManagementModal
+            lead={selectedLeadForLabels}
+            availableLabels={availableLabels}
+            onClose={() => {
+              setShowLabelModal(false);
+              setSelectedLeadForLabels(null);
+            }}
+            onUpdate={(updatedLabels) => {
+              // Update local state
+              setAllLeads(allLeads.map(l =>
+                l.id === selectedLeadForLabels.id ? { ...l, labels: updatedLabels } : l
+              ));
+              setShowLabelModal(false);
+              setSelectedLeadForLabels(null);
+            }}
+          />
         )}
 
         {/* Add Lead Modal */}
@@ -1990,6 +2028,130 @@ const BulkAssignModal = ({ selectedLeads, employees, onAssign, onClose }) => {
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+};
+
+// Label Management Modal Component
+const LabelManagementModal = ({ lead, availableLabels, onClose, onUpdate }) => {
+  const [selectedLabels, setSelectedLabels] = useState(lead.labels || []);
+  const [saving, setSaving] = useState(false);
+
+  const toggleLabel = (label) => {
+    setSelectedLabels(prev =>
+      prev.includes(label)
+        ? prev.filter(l => l !== label)
+        : [...prev, label]
+    );
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+
+      const { error } = await supabase
+        .from('leads')
+        .update({ labels: JSON.stringify(selectedLabels) })
+        .eq('id', lead.id);
+
+      if (error) {
+        console.error('Error updating labels:', error);
+        alert('Error updating labels');
+        return;
+      }
+
+      onUpdate(selectedLabels);
+    } catch (error) {
+      console.error('Error updating labels:', error);
+      alert('Error updating labels');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-md w-full">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <Tag className="w-5 h-5 mr-2" />
+              Manage Labels
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">{lead.company}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+          >
+            <X className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
+
+        <div className="p-6">
+          {availableLabels.length > 0 ? (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Select labels to apply to this lead:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {availableLabels.map((label) => {
+                  const isSelected = selectedLabels.includes(label);
+                  return (
+                    <button
+                      key={label}
+                      onClick={() => toggleLabel(label)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        isSelected
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <Tag className="w-3 h-3 inline mr-1" />
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Tag className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-600">No labels configured</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Please configure labels in the system settings
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex space-x-3 p-6 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg transition-colors duration-200 font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || availableLabels.length === 0}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-2 px-4 rounded-lg transition-colors duration-200 font-medium flex items-center justify-center"
+          >
+            {saving ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Labels
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
