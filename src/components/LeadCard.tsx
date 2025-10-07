@@ -19,6 +19,7 @@ interface LeadCardProps {
 
 const LeadCard: React.FC<LeadCardProps> = ({ lead, onLogCall }) => {
   const [availableLabels, setAvailableLabels] = React.useState([]);
+  const [availableLabelsMap, setAvailableLabelsMap] = useState({});
 
   // Fetch leads from database
   useEffect(() => {
@@ -29,7 +30,13 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onLogCall }) => {
     try {
       const labels = await getLeadLabelsConfig();
       console.log('Fetched labels:', labels);
-      setAvailableLabels(Array.isArray(labels) ? labels : []);
+      const labelsArray = Object.keys(labels ?? {});
+      console.log('Labels array:', labelsArray);
+      const labelsObj = labels ?? {};
+      const labelsMap: Map<string, any> =
+        labelsObj instanceof Map ? labelsObj : new Map(Object.entries(labelsObj));
+      setAvailableLabels(labelsArray);
+      setAvailableLabelsMap(labelsMap);
     } catch (error) {
       console.error('Error fetching labels:', error);
       setAvailableLabels([]);
