@@ -37,3 +37,12 @@ export const formatLocal = (isoString: string) => {
     timeStyle: "short",
   }).format(d);
 }
+
+export const getContrastText = (hex?: string) => {
+  if (!hex || !hex.startsWith('#') || (hex.length !== 7 && hex.length !== 4)) return 'white';
+  const expand = (h: string) => (h.length === 4 ? `#${h[1]}${h[1]}${h[2]}${h[2]}${h[3]}${h[3]}` : h);
+  const c = expand(hex).slice(1);
+  const r = parseInt(c.slice(0, 2), 16), g = parseInt(c.slice(2, 4), 16), b = parseInt(c.slice(4, 6), 16);
+  const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b); // 0-255
+  return lum > 150 ? 'black' : 'white';
+};

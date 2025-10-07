@@ -18,6 +18,7 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
   const [labelFilter, setLabelFilter] = React.useState('All');
   const [selectedLead, setSelectedLead] = React.useState(null);
   const [availableLabels, setAvailableLabels] = React.useState([]);
+  const [configuredLabelsMap, setConfiguredLabelsMap] = React.useState({});
   const [showLabelMenu, setShowLabelMenu] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [allLeads, setAllLeads] = React.useState([]);
@@ -44,7 +45,13 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
     try {
       const labels = await getLeadLabelsConfig();
       console.log('Fetched labels:', labels);
-      setAvailableLabels(Array.isArray(labels) ? labels : []);
+      const labelsArray = Object.keys(labels ?? {});
+      console.log('Labels array:', labelsArray);
+      const labelsObj = labels ?? {};
+      const labelsMap: Map<string, any> =
+        labelsObj instanceof Map ? labelsObj : new Map(Object.entries(labelsObj));
+      setAvailableLabels(labelsArray);
+      setConi(labelsMap);
     } catch (error) {
       console.error('Error fetching labels:', error);
       setAvailableLabels([]);
@@ -669,11 +676,10 @@ const Leads: React.FC<LeadsProps> = ({ onLogCall, onMenuClick }) => {
                               alert('Failed to update label');
                             }
                           }}
-                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                            isSelected
-                              ? 'bg-blue-600 text-white shadow-md'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isSelected
+                            ? 'bg-blue-600 text-white shadow-md'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
                         >
                           <Tag className="w-3 h-3 inline mr-1" />
                           {label}

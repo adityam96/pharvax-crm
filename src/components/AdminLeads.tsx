@@ -4,7 +4,7 @@ import { Search, Filter, Download, Calendar, ChevronDown, Upload, Plus, X, Mail,
 import { supabase, getAllLeads, getAllEmployees, getChatAndFollowUps, getUserProfile, getAllNotes, getAdminNotes } from '../lib/supabase';
 import { userCache } from '../lib/userCache';
 import { getCallStatusConfig, getLeadLabelsConfig } from '../lib/configDataService';
-import { getCallTitle } from '../lib/utils';
+import { getCallTitle, getContrastText } from '../lib/utils';
 
 const AdminLeads: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,6 +45,7 @@ const AdminLeads: React.FC = () => {
   const [showLabelModal, setShowLabelModal] = useState(false);
   const [selectedLeadForLabels, setSelectedLeadForLabels] = useState(null);
   const [availableLabels, setAvailableLabels] = useState([]);
+  const [availableLabelsMap, setAvailableLabelsMap] = useState({});
 
   // Fetch data from database
   useEffect(() => {
@@ -57,7 +58,13 @@ const AdminLeads: React.FC = () => {
     try {
       const labels = await getLeadLabelsConfig();
       console.log('Fetched labels:', labels);
-      setAvailableLabels(Array.isArray(labels) ? labels : []);
+      const labelsArray = Object.keys(labels ?? {});
+      console.log('Labels array:', labelsArray);
+      const labelsObj = labels ?? {};
+      const labelsMap: Map<string, any> =
+        labelsObj instanceof Map ? labelsObj : new Map(Object.entries(labelsObj));
+      setAvailableLabels(labelsArray);
+      setAvailableLabelsMap(labelsMap);
     } catch (error) {
       console.error('Error fetching labels:', error);
       setAvailableLabels([]);
@@ -739,15 +746,23 @@ const AdminLeads: React.FC = () => {
                 {lead.labels && lead.labels.length > 0 && (
                   <div className="bg-white border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer">
                     <div className="flex items-center space-x-2 text-gray-600">
-                      {lead.labels.map((label, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800"
-                        >
-                          <Tag className="w-3 h-3 mr-1" />
-                          {label}
-                        </span>
-                      ))}
+                      {lead.labels.map((label, index) => {
+                        const meta = availableLabelsMap instanceof Map
+                          ? availableLabelsMap.get(label)
+                          : availableLabelsMap?.[label];
+                        const color = meta?.color as string | undefined;
+                        const style = color ? { backgroundColor: color, color: getContrastText(color) } : {};
+                        return (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium"
+                            style={style}
+                          >
+                            <Tag className="w-3 h-3 mr-1" />
+                            {label}
+                          </span>
+                        );
+                      })}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1096,6 +1111,7 @@ const AdminLeads: React.FC = () => {
           <LabelManagementModal
             lead={selectedLeadForLabels}
             availableLabels={availableLabels}
+            availableLabelsMap={availableLabelsMap}
             onClose={() => {
               setShowLabelModal(false);
               setSelectedLeadForLabels(null);
@@ -2034,7 +2050,7 @@ const BulkAssignModal = ({ selectedLeads, employees, onAssign, onClose }) => {
 };
 
 // Label Management Modal Component
-const LabelManagementModal = ({ lead, availableLabels, onClose, onUpdate }) => {
+const LabelManagementModal = ({ lead, availableLabels, availableLabelsMap, onClose, onUpdate }) => {
   const [selectedLabels, setSelectedLabels] = useState(lead.labels || []);
   const [saving, setSaving] = useState(false);
 
@@ -2098,15 +2114,20 @@ const LabelManagementModal = ({ lead, availableLabels, onClose, onUpdate }) => {
               <div className="flex flex-wrap gap-2">
                 {availableLabels.map((label) => {
                   const isSelected = selectedLabels.includes(label);
+                  const meta = availableLabelsMap instanceof Map
+                    ? availableLabelsMap.get(label)
+                    : availableLabelsMap?.[label];
+                  const color = meta?.color ?? '#9CA3AF';
                   return (
                     <button
                       key={label}
                       onClick={() => toggleLabel(label)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isSelected ? 'shadow-md' : 'bg-transparent'}`}
+                      style={
                         isSelected
-                          ? 'bg-blue-600 text-white shadow-md'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+                          ? { backgroundColor: color, color: getContrastText(color) }
+                          : { border: `1px solid ${color}`, color }
+                      }
                     >
                       <Tag className="w-3 h-3 inline mr-1" />
                       {label}

@@ -272,7 +272,7 @@ const CallLogForm: React.FC<CallLogFormProps> = ({ onSave, selectedLead }) => {
           />
         </div>
 
-        <div className="flex items-center justify-between mb-2 md:hidden">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <button
               type="button"
