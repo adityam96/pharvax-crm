@@ -19,7 +19,7 @@ interface LeadCardProps {
 
 const LeadCard: React.FC<LeadCardProps> = ({ lead, onLogCall }) => {
   const [availableLabels, setAvailableLabels] = React.useState([]);
-  const [availableLabelsMap, setAvailableLabelsMap] = useState({});
+  const [availableLabelsMap, setAvailableLabelsMap] = React.useState({});
 
   // Fetch leads from database
   useEffect(() => {
